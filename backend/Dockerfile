@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --ignore-scripts
+RUN npm install --ignore-scripts
 COPY . .
 RUN npx prisma generate
 RUN npm run build
@@ -14,7 +14,7 @@ WORKDIR /app
 
 COPY package*.json ./
 # Install ALL dependencies (prisma CLI + ts-node needed for entrypoint)
-RUN npm ci --ignore-scripts
+RUN npm install --ignore-scripts
 
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/dist ./dist
