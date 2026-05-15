@@ -40,8 +40,8 @@ export class InvitationsService {
     page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.98, 0.973, 0.957) });
 
     // Border
-    page.drawRectangle({ x: 12, y: 12, width: width - 24, height: height - 24, borderColor: gold, borderWidth: 0.8, color: rgb(1,1,1,0) });
-    page.drawRectangle({ x: 18, y: 18, width: width - 36, height: height - 36, borderColor: gold, borderWidth: 0.3, color: rgb(1,1,1,0) });
+    page.drawRectangle({ x: 12, y: 12, width: width - 24, height: height - 24, borderColor: gold, borderWidth: 0.8 });
+    page.drawRectangle({ x: 18, y: 18, width: width - 36, height: height - 36, borderColor: gold, borderWidth: 0.3 });
 
     const branding = guest.ceremony.branding;
     const coupleName = branding?.coupleName || 'M & J';
@@ -87,7 +87,7 @@ export class InvitationsService {
     const qrSize = 90;
     const qrX = (width - qrSize) / 2;
     const qrY = 60;
-    page.drawRectangle({ x: qrX - 4, y: qrY - 4, width: qrSize + 8, height: qrSize + 8, borderColor: gold, borderWidth: 0.5, color: rgb(1,1,1,0) });
+    page.drawRectangle({ x: qrX - 4, y: qrY - 4, width: qrSize + 8, height: qrSize + 8, borderColor: gold, borderWidth: 0.5 });
 
     // Try to embed QR image
     try {
