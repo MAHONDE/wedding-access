@@ -12,8 +12,10 @@ async function bootstrap() {
     credentials: true,
   });
 
+  app.getHttpAdapter().get('/health', (_req, res) => res.json({ status: 'ok' }));
+
   const port = process.env.PORT || 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   console.log(`Wedding Access backend running on port ${port}`);
 }
 
