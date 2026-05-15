@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './common/prisma.module';
+import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CeremoniesModule } from './ceremonies/ceremonies.module';
@@ -12,6 +13,7 @@ import { BrandingModule } from './branding/branding.module';
 import { StatsModule } from './stats/stats.module';
 
 @Module({
+  providers: [AppService],
   imports: [
     PrismaModule,
     AuthModule,
