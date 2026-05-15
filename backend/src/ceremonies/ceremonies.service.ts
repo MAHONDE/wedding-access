@@ -1,21 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { ceremonyFilter } from '../common/utils/ceremony.utils';
 
 @Injectable()
 export class CeremoniesService {
   constructor(private prisma: PrismaService) {}
 
   list(user: any) {
-    const filter = ceremonyFilter(user);
-    return this.prisma.ceremony.findMany({
-      where: filter.ceremonyId ? { id: filter.ceremonyId } : {},
-      include: { branding: true },
-    });
+    const where =
+      user.role === 'SUPER_ADMIN'
+        ? {}
+        : user.ceremonyScope
+          ? { type: user.ceremonyScope as any }
+          : { id: '__none__' };
+
+    return this.prisma.ceremony.findMany({ where, orderBy: { date: 'asc' } });
   }
 
-  get(id: string) {
-    return this.prisma.ceremony.findUnique({ where: { id }, include: { branding: true } });
+  async get(id: string) {
+    const ceremony = await this.prisma.ceremony.findUnique({ where: { id } });
+    if (!ceremony) throw new NotFoundException('Cérémonie introuvable');
+    return ceremony;
   }
 
   create(dto: any) {

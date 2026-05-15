@@ -9,14 +9,22 @@ export class CeremoniesController {
   constructor(private service: CeremoniesService) {}
 
   @Get()
-  list(@CurrentUser() user: any) { return this.service.list(user); }
+  list(@CurrentUser() user: any) {
+    return this.service.list(user);
+  }
 
   @Get(':id')
-  get(@Param('id') id: string) { return this.service.get(id); }
+  get(@Param('id') id: string) {
+    return this.service.get(id);
+  }
 
   @Post()
-  create(@Body() dto: any) { return this.service.create(dto); }
+  create(@Body() dto: any) {
+    return this.service.create(dto);
+  }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: any) { return this.service.update(id, dto); }
+  update(@Param('id') id: string, @Body() dto: any) {
+    return this.service.update(id, dto);
+  }
 }

@@ -10,8 +10,28 @@ import { Roles } from '../common/decorators/roles.decorator';
 export class UsersController {
   constructor(private service: UsersService) {}
 
-  @Get()    list()                              { return this.service.list(); }
-  @Post()   create(@Body() dto: any)            { return this.service.create(dto); }
-  @Put(':id') update(@Param('id') id: string, @Body() dto: any) { return this.service.update(id, dto); }
-  @Delete(':id') delete(@Param('id') id: string) { return this.service.delete(id); }
+  @Get()
+  list() {
+    return this.service.list();
+  }
+
+  @Get(':id')
+  get(@Param('id') id: string) {
+    return this.service.get(id);
+  }
+
+  @Post()
+  create(@Body() dto: any) {
+    return this.service.create(dto);
+  }
+
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: any) {
+    return this.service.update(id, dto);
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.service.delete(id);
+  }
 }

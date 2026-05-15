@@ -4,93 +4,53 @@ import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
+  const adminExists = await prisma.user.findUnique({ where: { email: 'admin@wedding.local' } });
+  if (adminExists) {
+    console.log('Database already seeded, skipping.');
+    return;
+  }
+
   const vinHonneur = await prisma.ceremony.upsert({
-    where: { id: 'ceremony-vin-honneur' },
+    where: { type: 'VIN_HONNEUR' },
     update: {},
     create: {
-      id: 'ceremony-vin-honneur',
-      name: 'Vin d\'honneur',
+      name: "Vin d'honneur",
       type: 'VIN_HONNEUR',
+      description: 'Cocktail de mariage',
       date: new Date('2026-07-04T16:00:00Z'),
-      venue: 'Domaine des Roses',
+      location: 'Domaine des Roses',
     },
   });
 
   const diner = await prisma.ceremony.upsert({
-    where: { id: 'ceremony-diner' },
+    where: { type: 'DINER' },
     update: {},
     create: {
-      id: 'ceremony-diner',
       name: 'Dîner de mariage',
       type: 'DINER',
+      description: 'Dîner de réception',
       date: new Date('2026-07-04T19:30:00Z'),
-      venue: 'Domaine des Roses — Salle de réception',
+      location: 'Domaine des Roses — Salle de réception',
     },
   });
 
-  await prisma.branding.upsert({
-    where: { ceremonyId: vinHonneur.id },
-    update: {},
-    create: {
-      ceremonyId: vinHonneur.id,
-      coupleName: 'M & J',
-      eventDate: new Date('2026-07-04'),
-      primaryColor: '#C9A84C',
-    },
-  });
-
-  await prisma.branding.upsert({
-    where: { ceremonyId: diner.id },
-    update: {},
-    create: {
-      ceremonyId: diner.id,
-      coupleName: 'M & J',
-      eventDate: new Date('2026-07-04'),
-      primaryColor: '#C9A84C',
-    },
-  });
+  const brandingCount = await prisma.appBranding.count();
+  if (brandingCount === 0) {
+    await prisma.appBranding.create({ data: { appName: 'Wedding Access', activeThemeMode: 'light' } });
+  }
 
   const hash = await bcrypt.hash('Admin1234!', 12);
 
-  await prisma.user.upsert({
-    where: { email: 'admin@wedding.local' },
-    update: {},
-    create: {
-      email: 'admin@wedding.local',
-      passwordHash: hash,
-      firstName: 'Super',
-      lastName: 'Admin',
-      role: 'SUPER_ADMIN',
-    },
+  await prisma.user.createMany({
+    data: [
+      { email: 'admin@wedding.local', passwordHash: hash, firstName: 'Super', lastName: 'Admin', role: 'SUPER_ADMIN', ceremonyScope: null },
+      { email: 'vin@wedding.local', passwordHash: hash, firstName: 'Admin', lastName: "Vin d'honneur", role: 'ADMIN_VIN_HONNEUR', ceremonyScope: 'VIN_HONNEUR' },
+      { email: 'diner@wedding.local', passwordHash: hash, firstName: 'Agent', lastName: 'Dîner', role: 'AGENT_DINER', ceremonyScope: 'DINER' },
+    ],
+    skipDuplicates: true,
   });
 
-  await prisma.user.upsert({
-    where: { email: 'vin@wedding.local' },
-    update: {},
-    create: {
-      email: 'vin@wedding.local',
-      passwordHash: hash,
-      firstName: 'Admin',
-      lastName: 'Vin d\'honneur',
-      role: 'ADMIN_VIN_HONNEUR',
-      ceremonyId: vinHonneur.id,
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: 'diner@wedding.local' },
-    update: {},
-    create: {
-      email: 'diner@wedding.local',
-      passwordHash: hash,
-      firstName: 'Agent',
-      lastName: 'Dîner',
-      role: 'AGENT_DINER',
-      ceremonyId: diner.id,
-    },
-  });
-
-  console.log('✓ Seed complete');
+  console.log('Seed complete');
   console.log('  admin@wedding.local / Admin1234!');
   console.log('  vin@wedding.local   / Admin1234!');
   console.log('  diner@wedding.local / Admin1234!');

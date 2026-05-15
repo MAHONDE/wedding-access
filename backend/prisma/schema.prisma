@@ -19,135 +19,196 @@ enum CeremonyType {
   DINER
 }
 
+enum GuestType {
+  INDIVIDUAL
+  COUPLE
+}
+
 enum EntryStatus {
-  PENDING
-  INVITED
-  CONFIRMED
+  NOT_ARRIVED
   ARRIVED
-  ABSENT
 }
 
 enum ScanResult {
-  OK
-  ALREADY_SCANNED
-  INVALID_TOKEN
+  VALID
+  INVALID
+  ALREADY_USED
   WRONG_CEREMONY
-  NOT_CONFIRMED
 }
 
 enum InvitationStatus {
-  PENDING
   GENERATED
-  SENT
+  SENT_WHATSAPP
+  SENT_BLUETOOTH
+  NOT_SENT
+  OBSOLETE
 }
 
-enum TemplateType {
-  PDF
-  IMAGE
+enum TableShape {
+  ROUND
+  RECTANGULAR
+  SQUARE
+}
+
+enum SeatingSourceType {
+  MANUAL
+  GENERATED_FROM_PHOTO
 }
 
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         Role
-  ceremonyId   String?
-  ceremony     Ceremony?   @relation(fields: [ceremonyId], references: [id])
-  isActive     Boolean     @default(true)
-  scans        Scan[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id            String        @id @default(cuid())
+  email         String        @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  role          Role
+  ceremonyScope CeremonyType?
+  isActive      Boolean       @default(true)
+  scanLogs      ScanLog[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Ceremony {
-  id          String       @id @default(cuid())
-  name        String
-  type        CeremonyType
-  date        DateTime
-  venue       String?
-  users       User[]
-  guests      Guest[]
-  tables      Table[]
-  branding    Branding?
-  templates   PdfTemplate[]
-  scans       Scan[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           String        @id @default(cuid())
+  name         String
+  type         CeremonyType  @unique
+  description  String?
+  date         DateTime
+  location     String?
+  guests       Guest[]
+  tables       Table[]
+  templates    Template[]
+  invitations  Invitation[]
+  scanLogs     ScanLog[]
+  seatingPlans SeatingPlan[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model AppBranding {
+  id              String   @id @default(cuid())
+  appName         String   @default("Wedding Access")
+  monogramPath    String?
+  primaryLogoPath String?
+  activeThemeMode String?
+  updatedByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Guest {
-  id             String           @id @default(cuid())
-  ceremonyId     String
-  ceremony       Ceremony         @relation(fields: [ceremonyId], references: [id])
-  firstName      String
-  lastName       String
-  email          String?
-  phone          String?
-  tableId        String?
-  table          Table?           @relation(fields: [tableId], references: [id])
-  tableNumber    String?
-  entryStatus    EntryStatus      @default(INVITED)
-  qrToken        String?          @unique
-  qrCodePath     String?
-  invitationPath String?
-  invitationStatus InvitationStatus @default(PENDING)
-  scans          Scan[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id            String       @id @default(cuid())
+  ceremonyId    String
+  ceremony      Ceremony     @relation(fields: [ceremonyId], references: [id])
+  type          GuestType    @default(INDIVIDUAL)
+  primaryName   String
+  companionName String?
+  email         String?
+  phone         String?
+  numberOfSeats Int          @default(1)
+  tableId       String?
+  table         Table?       @relation(fields: [tableId], references: [id])
+  entryStatus   EntryStatus  @default(NOT_ARRIVED)
+  qrCodes       QRCode[]
+  invitations   Invitation[]
+  scanLogs      ScanLog[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model QRCode {
+  id          String       @id @default(cuid())
+  guestId     String
+  guest       Guest        @relation(fields: [guestId], references: [id])
+  ceremonyId  String
+  token       String       @unique
+  qrImagePath String?
+  isActive    Boolean      @default(true)
+  generatedAt DateTime     @default(now())
+  lastUsedAt  DateTime?
+  invitations Invitation[]
+}
+
+model Template {
+  id           String       @id @default(cuid())
+  ceremonyId   String
+  ceremony     Ceremony     @relation(fields: [ceremonyId], references: [id])
+  name         String
+  filePath     String
+  isActive     Boolean      @default(true)
+  qrZoneConfig Json?
+  placeholders Json?
+  invitations  Invitation[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Invitation {
+  id                          String           @id @default(cuid())
+  guestId                     String
+  guest                       Guest            @relation(fields: [guestId], references: [id])
+  ceremonyId                  String
+  ceremony                    Ceremony         @relation(fields: [ceremonyId], references: [id])
+  qrCodeId                    String
+  qrCode                      QRCode           @relation(fields: [qrCodeId], references: [id])
+  templateId                  String?
+  template                    Template?        @relation(fields: [templateId], references: [id])
+  pdfPath                     String?
+  fileName                    String?
+  status                      InvitationStatus @default(NOT_SENT)
+  isObsolete                  Boolean          @default(false)
+  regeneratedFromInvitationId String?
+  generatedAt                 DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
 }
 
 model Table {
-  id         String    @id @default(cuid())
-  ceremonyId String
-  ceremony   Ceremony  @relation(fields: [ceremonyId], references: [id])
-  number     String
-  name       String?
-  capacity   Int       @default(10)
-  guests     Guest[]
-  createdAt  DateTime  @default(now())
+  id             String     @id @default(cuid())
+  ceremonyId     String
+  ceremony       Ceremony   @relation(fields: [ceremonyId], references: [id])
+  name           String
+  numberOfChairs Int        @default(10)
+  positionX      Float?
+  positionY      Float?
+  shape          TableShape @default(ROUND)
+  guests         Guest[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 }
 
-model Scan {
-  id         String     @id @default(cuid())
-  ceremonyId String
-  ceremony   Ceremony   @relation(fields: [ceremonyId], references: [id])
-  guestId    String?
-  guest      Guest?     @relation(fields: [guestId], references: [id])
-  scannedById String?
-  scannedBy  User?      @relation(fields: [scannedById], references: [id])
-  token      String
-  result     ScanResult
-  scannedAt  DateTime   @default(now())
+model SeatingPlan {
+  id              String            @id @default(cuid())
+  ceremonyId      String
+  ceremony        Ceremony          @relation(fields: [ceremonyId], references: [id])
+  name            String
+  planData        Json              @default("{}")
+  sourceType      SeatingSourceType @default(MANUAL)
+  sourcePhotoPath String?
+  pdfPath         String?
+  roomPhotos      RoomPhoto[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
 
-model Branding {
-  id          String    @id @default(cuid())
-  ceremonyId  String    @unique
-  ceremony    Ceremony  @relation(fields: [ceremonyId], references: [id])
-  coupleName  String    @default("M & J")
-  eventDate   DateTime?
-  primaryColor String   @default("#C9A84C")
-  accentColor  String   @default("#E8D5A0")
-  fontFamily   String   @default("Cormorant Garamond")
-  monogramPath String?
-  logoPath     String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model RoomPhoto {
+  id            String      @id @default(cuid())
+  seatingPlanId String
+  seatingPlan   SeatingPlan @relation(fields: [seatingPlanId], references: [id])
+  filePath      String
+  uploadedAt    DateTime    @default(now())
 }
 
-model PdfTemplate {
-  id         String       @id @default(cuid())
-  ceremonyId String
-  ceremony   Ceremony     @relation(fields: [ceremonyId], references: [id])
-  type       TemplateType @default(PDF)
-  name       String
-  filePath   String
-  isActive   Boolean      @default(true)
-  qrX        Float        @default(300)
-  qrY        Float        @default(400)
-  qrSize     Float        @default(80)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+model ScanLog {
+  id              String     @id @default(cuid())
+  guestId         String?
+  guest           Guest?     @relation(fields: [guestId], references: [id])
+  ceremonyId      String?
+  ceremony        Ceremony?  @relation(fields: [ceremonyId], references: [id])
+  qrToken         String
+  scannedByUserId String
+  scannedBy       User       @relation(fields: [scannedByUserId], references: [id])
+  result          ScanResult
+  scannedAt       DateTime   @default(now())
+  deviceInfo      String?
 }

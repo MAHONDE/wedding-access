@@ -17,7 +17,12 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Identifiants invalides');
 
-    const payload = { sub: user.id, email: user.email, role: user.role, ceremonyId: user.ceremonyId };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      ceremonyScope: user.ceremonyScope,
+    };
     const access_token = this.jwt.sign(payload);
 
     const { passwordHash, ...safeUser } = user;
@@ -28,8 +33,13 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
-        id: true, email: true, firstName: true, lastName: true,
-        role: true, ceremonyId: true, isActive: true,
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        ceremonyScope: true,
+        isActive: true,
       },
     });
     if (!user) throw new UnauthorizedException();

@@ -1,17 +1,20 @@
+/**
+ * @deprecated Use SeatingPlansModule instead.
+ * This file is kept for reference but not registered in AppModule.
+ */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { ceremonyFilter } from '../common/utils/ceremony.utils';
 
 @Injectable()
 export class SeatingService {
   constructor(private prisma: PrismaService) {}
 
   list(user: any, ceremonyId?: string) {
-    const filter = ceremonyId ? { ceremonyId } : ceremonyFilter(user);
+    const where: any = ceremonyId ? { ceremonyId } : {};
     return this.prisma.table.findMany({
-      where: filter,
-      include: { guests: { select: { id:true, firstName:true, lastName:true } } },
-      orderBy: { number: 'asc' },
+      where,
+      include: { guests: { select: { id: true, primaryName: true } } },
+      orderBy: { name: 'asc' },
     });
   }
 
@@ -28,10 +31,9 @@ export class SeatingService {
   }
 
   async assign(guestId: string, tableId: string | null) {
-    const table = tableId ? await this.prisma.table.findUnique({ where: { id: tableId } }) : null;
     return this.prisma.guest.update({
       where: { id: guestId },
-      data: { tableId: tableId || null, tableNumber: table?.number || null },
+      data: { tableId: tableId || null },
     });
   }
 }

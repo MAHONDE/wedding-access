@@ -6,11 +6,13 @@ import { UsersModule } from './users/users.module';
 import { CeremoniesModule } from './ceremonies/ceremonies.module';
 import { GuestsModule } from './guests/guests.module';
 import { QrModule } from './qr/qr.module';
+import { TemplatesModule } from './templates/templates.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { ScansModule } from './scans/scans.module';
-import { SeatingModule } from './seating/seating.module';
+import { SeatingPlansModule } from './seating-plans/seating-plans.module';
 import { BrandingModule } from './branding/branding.module';
 import { StatsModule } from './stats/stats.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   providers: [AppService],
@@ -21,11 +23,13 @@ import { StatsModule } from './stats/stats.module';
     CeremoniesModule,
     GuestsModule,
     QrModule,
+    TemplatesModule,
     InvitationsModule,
     ScansModule,
-    SeatingModule,
+    SeatingPlansModule,
     BrandingModule,
     StatsModule,
+    FilesModule,
   ],
 })
 export class AppModule {}

@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { GuestsService } from './guests.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -9,12 +19,19 @@ export class GuestsController {
   constructor(private service: GuestsService) {}
 
   @Get()
-  list(@CurrentUser() user: any, @Query('q') q?: string, @Query('ceremonyId') ceremonyId?: string) {
-    return this.service.list(user, q);
+  list(
+    @CurrentUser() user: any,
+    @Query('ceremonyId') ceremonyId?: string,
+    @Query('q') q?: string,
+  ) {
+    return this.service.list(user, ceremonyId, q);
   }
 
   @Get('stats')
-  stats(@CurrentUser() user: any, @Query('ceremonyId') ceremonyId?: string) {
+  stats(
+    @CurrentUser() user: any,
+    @Query('ceremonyId') ceremonyId?: string,
+  ) {
     return this.service.stats(user, ceremonyId);
   }
 
@@ -29,7 +46,11 @@ export class GuestsController {
   }
 
   @Put(':id')
-  update(@CurrentUser() user: any, @Param('id') id: string, @Body() dto: any) {
+  update(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: any,
+  ) {
     return this.service.update(user, id, dto);
   }
 

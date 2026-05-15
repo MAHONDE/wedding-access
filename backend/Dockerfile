@@ -23,8 +23,8 @@ COPY --from=builder /app/dist ./dist
 COPY prisma ./prisma
 COPY entrypoint.sh ./entrypoint.sh
 
-RUN mkdir -p /app/storage/qrcodes /app/storage/invitations /app/storage/monograms \
-             /app/storage/templates /app/storage/seating-plans /app/storage/room-photos \
+RUN mkdir -p /app/storage/qrcodes /app/storage/invitations /app/storage/branding \
+             /app/storage/templates /app/storage/seating-photos /app/storage/seating-pdfs \
   && chmod +x /app/entrypoint.sh \
   && chown -R appuser:appgroup /app
 
