@@ -1,0 +1,8 @@
+﻿Variables à copier dans Railway (service backend → onglet Variables) :
+
+JWT_SECRET=c1742c1424f2b512a4e5a21b483c2ea40166ec565c95c84a90d1f8555471d6483e7237d22fe60ffbf6d290c45450d0cf
+QR_SECRET=cb290991b1586b7f10abb970deda57c1cbb33feeb91a08e2c9f81494be010861a5a978c994e49d75924e6a9f31613705
+JWT_EXPIRES_IN=8h
+STORAGE_PATH=/app/storage
+
+(DATABASE_URL est injecté automatiquement par Railway PostgreSQL — ne pas toucher)

@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Wedding Access · Plateforme cérémonie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+/* ─── Wedding Access · Design System ──────────────────── */
+:root {
+  --wa-gold:#C9A84C;--wa-gold-light:#E8D5A0;--wa-gold-dark:#9B7B2E;
+  --wa-cream:#FAF8F4;--wa-ivory:#F5F1EA;--wa-stone:#E8E4DC;
+  --wa-charcoal:#2C2C2C;--wa-slate:#6B6560;--wa-muted:#9B9490;
+  --wa-white:#FFFFFF;--wa-black:#1A1A1A;
+  --wa-success:#4A7C59;--wa-error:#8B3A3A;--wa-warning:#8B6914;--wa-info:#2C5F8A;
+  --wa-font-serif:'Cormorant Garamond','Georgia',serif;
+  --wa-font-sans:'Inter','Helvetica Neue',sans-serif;
+  --wa-radius-sm:4px;--wa-radius:8px;--wa-radius-lg:16px;--wa-radius-xl:24px;
+  --wa-shadow-sm:0 1px 3px rgba(0,0,0,.08);--wa-shadow:0 4px 16px rgba(0,0,0,.10);--wa-shadow-lg:0 8px 32px rgba(0,0,0,.14);
+  --wa-transition:200ms cubic-bezier(.4,0,.2,1);
+}
+[data-theme="night"]{--wa-cream:#1E1C19;--wa-ivory:#252320;--wa-stone:#2E2B26;--wa-charcoal:#F0EDE8;--wa-slate:#B0AAA2;--wa-muted:#706A63;--wa-white:#2E2B26;--wa-black:#F0EDE8;}
+[data-density="compact"]{--wa-text-base:13px;}
+[data-density="comfortable"]{--wa-text-base:14px;}
+[data-density="spacious"]{--wa-text-base:15px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;-webkit-text-size-adjust:100%;}
+body{font-family:var(--wa-font-sans);font-size:var(--wa-text-base,14px);color:var(--wa-charcoal);background:var(--wa-cream);line-height:1.5;min-height:100dvh;overflow-x:hidden;}
+.wa-boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--wa-cream);font-family:var(--wa-font-serif);font-size:1.75rem;font-weight:300;color:var(--wa-gold);letter-spacing:.15em;}
+.wa-layout{display:flex;min-height:100dvh;}
+.wa-sidebar{width:240px;flex-shrink:0;background:var(--wa-ivory);border-right:1px solid var(--wa-stone);display:flex;flex-direction:column;padding:1.5rem 0;position:fixed;top:0;left:0;bottom:0;z-index:100;transition:transform var(--wa-transition);}
+.wa-sidebar-logo{padding:0 1.25rem 1.5rem;border-bottom:1px solid var(--wa-stone);margin-bottom:.75rem;}
+.wa-sidebar-logo h1{font-family:var(--wa-font-serif);font-size:1.25rem;font-weight:400;color:var(--wa-gold);letter-spacing:.08em;}
+.wa-sidebar-logo p{font-size:11px;color:var(--wa-muted);margin-top:2px;letter-spacing:.04em;}
+.wa-nav{flex:1;padding:0 .75rem;}
+.wa-nav-item{display:flex;align-items:center;gap:.625rem;padding:.6rem .75rem;border-radius:var(--wa-radius);color:var(--wa-slate);font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all var(--wa-transition);margin-bottom:2px;}
+.wa-nav-item:hover{background:var(--wa-stone);color:var(--wa-charcoal);}
+.wa-nav-item.active{background:var(--wa-gold);color:var(--wa-white);}
+.wa-sidebar-footer{padding:.75rem;border-top:1px solid var(--wa-stone);}
+.wa-main{margin-left:240px;flex:1;min-width:0;display:flex;flex-direction:column;}
+.wa-topbar{position:sticky;top:0;z-index:50;background:rgba(250,248,244,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--wa-stone);padding:.875rem 1.5rem;display:flex;align-items:center;gap:1rem;}
+[data-theme="night"] .wa-topbar{background:rgba(30,28,25,.92);}
+.wa-topbar-title{font-family:var(--wa-font-serif);font-size:1.25rem;font-weight:400;flex:1;}
+.wa-page{padding:1.5rem;}
+.wa-card{background:var(--wa-ivory);border:1px solid var(--wa-stone);border-radius:var(--wa-radius-lg);padding:1.25rem;box-shadow:var(--wa-shadow-sm);}
+.wa-card-title{font-family:var(--wa-font-serif);font-size:1.1rem;font-weight:400;color:var(--wa-charcoal);margin-bottom:.5rem;}
+.wa-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.wa-stat{background:var(--wa-ivory);border:1px solid var(--wa-stone);border-radius:var(--wa-radius-lg);padding:1.25rem;text-align:center;}
+.wa-stat-value{font-family:var(--wa-font-serif);font-size:2.5rem;font-weight:300;color:var(--wa-gold);line-height:1;}
+.wa-stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--wa-muted);margin-top:.375rem;}
+.wa-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:var(--wa-radius);font-size:13px;font-weight:500;font-family:var(--wa-font-sans);cursor:pointer;border:1px solid transparent;transition:all var(--wa-transition);text-decoration:none;}
+.wa-btn-primary{background:var(--wa-gold);color:var(--wa-white);border-color:var(--wa-gold);}
+.wa-btn-primary:hover{background:var(--wa-gold-dark);border-color:var(--wa-gold-dark);}
+.wa-btn-secondary{background:transparent;color:var(--wa-charcoal);border-color:var(--wa-stone);}
+.wa-btn-secondary:hover{background:var(--wa-stone);}
+.wa-btn-ghost{background:transparent;color:var(--wa-slate);border-color:transparent;}
+.wa-btn-ghost:hover{background:var(--wa-stone);color:var(--wa-charcoal);}
+.wa-btn-danger{background:var(--wa-error);color:var(--wa-white);border-color:var(--wa-error);}
+.wa-btn:disabled{opacity:.5;cursor:not-allowed;}
+.wa-input{width:100%;padding:.5rem .75rem;border:1px solid var(--wa-stone);border-radius:var(--wa-radius);font-size:13px;font-family:var(--wa-font-sans);background:var(--wa-cream);color:var(--wa-charcoal);transition:border-color var(--wa-transition);outline:none;}
+.wa-input:focus{border-color:var(--wa-gold);box-shadow:0 0 0 3px rgba(201,168,76,.15);}
+select.wa-input{cursor:pointer;}
+.wa-table-wrap{overflow-x:auto;}
+.wa-table{width:100%;border-collapse:collapse;font-size:13px;}
+.wa-table th{text-align:left;padding:.625rem .875rem;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--wa-muted);border-bottom:1px solid var(--wa-stone);white-space:nowrap;}
+.wa-table td{padding:.75rem .875rem;border-bottom:1px solid var(--wa-stone);vertical-align:middle;}
+.wa-table tr:last-child td{border-bottom:none;}
+.wa-table tr:hover td{background:var(--wa-stone);}
+.wa-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:500;white-space:nowrap;}
+.wa-badge-success{background:#D4EAD9;color:var(--wa-success);}
+.wa-badge-error{background:#EAD4D4;color:var(--wa-error);}
+.wa-badge-warning{background:#EAE0D4;color:var(--wa-warning);}
+.wa-badge-info{background:#D4E0EA;color:var(--wa-info);}
+.wa-badge-muted{background:var(--wa-stone);color:var(--wa-slate);}
+.wa-login-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--wa-cream);padding:1.5rem;}
+.wa-login-box{width:100%;max-width:400px;background:var(--wa-ivory);border:1px solid var(--wa-stone);border-radius:var(--wa-radius-xl);padding:2.5rem;box-shadow:var(--wa-shadow-lg);}
+.wa-login-logo{text-align:center;margin-bottom:2rem;}
+.wa-login-logo h1{font-family:var(--wa-font-serif);font-size:2rem;font-weight:300;color:var(--wa-gold);letter-spacing:.1em;}
+.wa-login-logo p{font-size:12px;color:var(--wa-muted);letter-spacing:.05em;margin-top:4px;}
+.wa-form-group{margin-bottom:1rem;}
+.wa-form-label{display:block;font-size:12px;font-weight:500;color:var(--wa-slate);margin-bottom:.375rem;text-transform:uppercase;letter-spacing:.05em;}
+.wa-form-error{font-size:12px;color:var(--wa-error);margin-top:.375rem;}
+.wa-scanner-page{display:flex;flex-direction:column;align-items:center;gap:1.5rem;padding:1.5rem;max-width:500px;margin:0 auto;}
+.wa-scanner-viewport{width:100%;aspect-ratio:1;border-radius:var(--wa-radius-lg);overflow:hidden;background:var(--wa-black);position:relative;}
+.wa-scanner-viewport video{width:100%;height:100%;object-fit:cover;}
+.wa-scanner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.wa-scanner-frame{width:65%;aspect-ratio:1;border:2px solid var(--wa-gold);border-radius:var(--wa-radius);box-shadow:0 0 0 9999px rgba(0,0,0,.45);}
+.wa-scanner-result{width:100%;border-radius:var(--wa-radius-lg);padding:1.25rem;border:1px solid;}
+.wa-scanner-result.success{background:#D4EAD9;border-color:#A8D5B0;color:var(--wa-success);}
+.wa-scanner-result.error{background:#EAD4D4;border-color:#D5A8A8;color:var(--wa-error);}
+.wa-scanner-result.warning{background:#EAE0D4;border-color:#D5C4A8;color:var(--wa-warning);}
+.wa-scanner-result h3{font-family:var(--wa-font-serif);font-size:1.2rem;margin-bottom:.5rem;}
+.wa-scanner-result p{font-size:13px;line-height:1.5;}
+.wa-demo-hint{background:var(--wa-stone);border:1px solid var(--wa-gold-light);border-radius:var(--wa-radius);padding:.75rem 1rem;margin-top:1rem;font-size:12px;color:var(--wa-slate);line-height:1.6;}
+.wa-demo-hint strong{color:var(--wa-gold-dark);}
+.wa-demo-badge{display:inline-block;background:var(--wa-gold);color:var(--wa-white);font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;letter-spacing:.05em;margin-left:6px;vertical-align:middle;}
+@media(max-width:768px){
+  .wa-sidebar{transform:translateX(-100%);}
+  .wa-sidebar.open{transform:translateX(0);}
+  .wa-main{margin-left:0;}
+  #sidebar-toggle{display:flex !important;}
+}
+.wa-flex{display:flex;align-items:center;}
+.wa-flex-between{display:flex;align-items:center;justify-content:space-between;}
+.wa-gap-sm{gap:.5rem;}
+.wa-gap{gap:.75rem;}
+.wa-gap-lg{gap:1rem;}
+.wa-text-muted{color:var(--wa-muted);}
+.wa-text-gold{color:var(--wa-gold);}
+.wa-text-serif{font-family:var(--wa-font-serif);}
+.wa-text-sm{font-size:12px;}
+.wa-mb{margin-bottom:1rem;}
+.wa-mb-lg{margin-bottom:1.5rem;}
+  </style>
+
+  <script>
+  /* ═══════════════════════════════════════════════════════════════
+     CONFIGURATION — modifiez uniquement cette section
+
+     Mode démo (Netlify, présentation) :
+       demoMode: true   → données fictives, aucun backend requis
+
+     Mode production (backend déployé) :
+       demoMode: false
+       apiBase: 'https://votre-backend.railway.app/api'
+  ═══════════════════════════════════════════════════════════════ */
+  window.WA_CONFIG = {
+    demoMode: true,
+    apiBase:  'https://VOTRE-BACKEND.railway.app/api'
+  };
+  </script>
+</head>
+<body data-theme="day" data-density="comfortable">
+  <div id="root"><div class="wa-boot">Wedding Access</div></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+  <!-- ── API : mode démo + mode réel ─────────────────────────── -->
+  <script>
+  ;(function(global) {
+    'use strict';
+    const CFG  = global.WA_CONFIG || { demoMode: true };
+    const DEMO = CFG.demoMode !== false;
+
+    /* ── Données fictives ── */
+    const DEMO_USERS = {
+      'admin@demo.fr': { id:'u1', email:'admin@demo.fr', firstName:'Sophie', lastName:'Martin', role:'SUPER_ADMIN', ceremonyId:null, isActive:true },
+      'vin@demo.fr':   { id:'u2', email:'vin@demo.fr',   firstName:'Marie',  lastName:'Dupont', role:'ADMIN_VIN_HONNEUR', ceremonyId:'c1', isActive:true },
+      'diner@demo.fr': { id:'u3', email:'diner@demo.fr', firstName:'Jean',   lastName:'Bernard',role:'AGENT_DINER', ceremonyId:'c2', isActive:true },
+    };
+
+    let _guests = [
+      { id:'g1', ceremonyId:'c1', firstName:'Alexandre', lastName:'Dubois',   email:'alex@mail.fr',      tableNumber:'1', entryStatus:'ARRIVED',   qrToken:'WA-V-G001-2026.abc123456789', invitationStatus:'GENERATED' },
+      { id:'g2', ceremonyId:'c1', firstName:'Camille',   lastName:'Lefebvre', email:'camille@mail.fr',   tableNumber:'1', entryStatus:'CONFIRMED',  qrToken:'WA-V-G002-2026.def456789012', invitationStatus:'GENERATED' },
+      { id:'g3', ceremonyId:'c1', firstName:'Thomas',    lastName:'Moreau',   email:'thomas@mail.fr',    tableNumber:'2', entryStatus:'INVITED',    qrToken:null,                          invitationStatus:'PENDING'   },
+      { id:'g4', ceremonyId:'c1', firstName:'Isabelle',  lastName:'Simon',    email:'isabelle@mail.fr',  tableNumber:'2', entryStatus:'ARRIVED',    qrToken:'WA-V-G004-2026.ghi789012345', invitationStatus:'GENERATED' },
+      { id:'g5', ceremonyId:'c1', firstName:'Pierre',    lastName:'Laurent',  email:'pierre@mail.fr',    tableNumber:'3', entryStatus:'ABSENT',     qrToken:'WA-V-G005-2026.jkl012345678', invitationStatus:'GENERATED' },
+      { id:'g6', ceremonyId:'c1', firstName:'Mathilde',  lastName:'Blanc',    email:'mathilde@mail.fr',  tableNumber:'3', entryStatus:'INVITED',    qrToken:null,                          invitationStatus:'PENDING'   },
+      { id:'g7', ceremonyId:'c1', firstName:'Raphaël',   lastName:'Garnier',  email:'raph@mail.fr',      tableNumber:'4', entryStatus:'CONFIRMED',  qrToken:'WA-V-G007-2026.mno345678901', invitationStatus:'GENERATED' },
+      { id:'g8', ceremonyId:'c1', firstName:'Lucie',     lastName:'Fontaine', email:'lucie@mail.fr',     tableNumber:'4', entryStatus:'INVITED',    qrToken:null,                          invitationStatus:'PENDING'   },
+      { id:'g9', ceremonyId:'c2', firstName:'Julien',    lastName:'Petit',    email:'julien@mail.fr',    tableNumber:'1', entryStatus:'CONFIRMED',  qrToken:'WA-D-G009-2026.pqr678901234', invitationStatus:'GENERATED' },
+      { id:'g10',ceremonyId:'c2', firstName:'Eléonore',  lastName:'Rousseau', email:'eleonore@mail.fr',  tableNumber:'2', entryStatus:'INVITED',    qrToken:null,                          invitationStatus:'PENDING'   },
+    ];
+
+    const DEMO_SCANS = [
+      { id:'s1', result:'OK',             scannedAt:new Date(Date.now()-35*60000).toISOString(), guest:_guests[0], scannedBy:{ email:'vin@demo.fr' } },
+      { id:'s2', result:'OK',             scannedAt:new Date(Date.now()-28*60000).toISOString(), guest:_guests[3], scannedBy:{ email:'vin@demo.fr' } },
+      { id:'s3', result:'ALREADY_SCANNED',scannedAt:new Date(Date.now()-12*60000).toISOString(), guest:_guests[0], scannedBy:{ email:'vin@demo.fr' } },
+      { id:'s4', result:'INVALID_TOKEN',  scannedAt:new Date(Date.now()-5*60000).toISOString(),  guest:null,       scannedBy:{ email:'vin@demo.fr' } },
+    ];
+
+    const wait = (ms=450) => new Promise(r => setTimeout(r, ms));
+    let _demoToken = localStorage.getItem('wa_token');
+    let _demoUser  = null;
+    try { _demoUser = JSON.parse(localStorage.getItem('wa_user') || 'null'); } catch {}
+
+    const mockAPI = {
+      auth: {
+        login: async (email, pw) => {
+          await wait(700);
+          const u = DEMO_USERS[email];
+          if (!u || pw !== 'demo') throw new Error('Identifiants incorrects.\nMot de passe démo : demo');
+          _demoUser = u; _demoToken = 'demo-token';
+          localStorage.setItem('wa_token', _demoToken);
+          localStorage.setItem('wa_user',  JSON.stringify(u));
+          return { access_token: _demoToken, user: u };
+        },
+        me:       async () => { await wait(200); if (!_demoUser) throw new Error('Non authentifié'); return _demoUser; },
+        logout:   ()      => { _demoToken=null; _demoUser=null; localStorage.removeItem('wa_token'); localStorage.removeItem('wa_user'); },
+        setToken: t       => { _demoToken=t; if(t) localStorage.setItem('wa_token',t); else localStorage.removeItem('wa_token'); },
+        getToken: ()      => _demoToken,
+      },
+      branding: {
+        get:    async ()      => { await wait(200); return { coupleName:'M & J', eventDate:'2026-07-04', primaryColor:'#C9A84C' }; },
+        update: async (c,d)   => { await wait(300); return d; },
+      },
+      ceremonies: {
+        list: async () => { await wait(300); return [
+          { id:'c1', name:"Vin d'honneur",   type:'VIN_HONNEUR', date:'2026-07-04T16:00:00Z', venue:'Domaine des Roses' },
+          { id:'c2', name:'Dîner de mariage',type:'DINER',       date:'2026-07-04T19:30:00Z', venue:'Salle de réception' },
+        ]; },
+      },
+      guests: {
+        list: async (cId, q) => {
+          await wait(400);
+          let r = _guests.filter(g => !cId || g.ceremonyId === cId);
+          if (q) { const ql=q.toLowerCase(); r=r.filter(g=>g.firstName.toLowerCase().includes(ql)||g.lastName.toLowerCase().includes(ql)); }
+          return r;
+        },
+        stats: async cId => {
+          await wait(300);
+          const r = _guests.filter(g => !cId || g.ceremonyId === cId);
+          const arrived=r.filter(g=>g.entryStatus==='ARRIVED').length;
+          const absent=r.filter(g=>g.entryStatus==='ABSENT').length;
+          return { total:r.length, arrived, absent, confirmed:r.filter(g=>g.entryStatus==='CONFIRMED').length, pending:r.length-arrived-absent };
+        },
+        create: async dto => { await wait(500); const g={id:'g'+Date.now(),entryStatus:'INVITED',qrToken:null,invitationStatus:'PENDING',...dto}; _guests.push(g); return g; },
+        update: async (id,dto) => { await wait(400); const i=_guests.findIndex(g=>g.id===id); if(i>=0) _guests[i]={..._guests[i],...dto}; return _guests[i]; },
+        delete: async id => { await wait(300); _guests=_guests.filter(g=>g.id!==id); },
+      },
+      qr: {
+        generate: async guestId => {
+          await wait(600);
+          const i=_guests.findIndex(g=>g.id===guestId);
+          if(i>=0 && !_guests[i].qrToken) _guests[i].qrToken=`WA-V-${guestId.slice(-4).toUpperCase()}-2026.demo${Date.now().toString().slice(-8)}`;
+          return _guests[i]?.qrToken;
+        },
+        regenerate: async guestId => {
+          await wait(600);
+          const i=_guests.findIndex(g=>g.id===guestId);
+          if(i>=0) _guests[i].qrToken=`WA-V-${guestId.slice(-4).toUpperCase()}-2026.regen${Date.now().toString().slice(-8)}`;
+          return _guests[i]?.qrToken;
+        },
+      },
+      invitations: {
+        generate: async guestId => { await wait(800); const i=_guests.findIndex(g=>g.id===guestId); if(i>=0) _guests[i].invitationStatus='GENERATED'; return { path:'/demo' }; },
+        download:  guestId => null,
+      },
+      tables: {
+        list: async () => { await wait(300); return [
+          { id:'t1', number:'1', name:'Table Famille', capacity:10 },
+          { id:'t2', number:'2', name:'Table Amis',    capacity:8 },
+          { id:'t3', number:'3', name:'Table Collègues',capacity:8},
+          { id:'t4', number:'4', name:'Table Témoins', capacity:6 },
+        ]; },
+        create: async dto => { await wait(400); return { id:'t'+Date.now(), ...dto }; },
+        update: async (id,dto) => { await wait(400); return dto; },
+        delete: async id => { await wait(300); },
+        assign: async (guestId,tableId) => { await wait(400); return {}; },
+      },
+      scan: {
+        verify: async token => {
+          await wait(500);
+          const g=_guests.find(g=>g.qrToken===token);
+          if(!g) return { valid:false, result:'INVALID_TOKEN', message:'QR code invalide ou inconnu' };
+          if(g.entryStatus==='ARRIVED') return { valid:false, result:'ALREADY_SCANNED', message:'Invité déjà enregistré', guest:g };
+          return { valid:true, result:'OK', guest:g };
+        },
+        markEntry: async token => {
+          await wait(500);
+          const i=_guests.findIndex(g=>g.qrToken===token);
+          if(i<0) return { valid:false, result:'INVALID_TOKEN', message:'Token inconnu' };
+          _guests[i].entryStatus='ARRIVED';
+          return { valid:true, result:'OK', guest:_guests[i] };
+        },
+        history: async () => { await wait(400); return { data:DEMO_SCANS, total:DEMO_SCANS.length, page:1, pages:1 }; },
+      },
+      stats: {
+        live: async cId => {
+          await wait(300);
+          const r=_guests.filter(g=>!cId||g.ceremonyId===cId);
+          const arrived=r.filter(g=>g.entryStatus==='ARRIVED').length;
+          return { total:r.length, arrived, absent:r.filter(g=>g.entryStatus==='ABSENT').length, pending:r.length-arrived, scansToday:arrived, timestamp:new Date() };
+        },
+      },
+      users: {
+        list:   async ()      => { await wait(400); return Object.values(DEMO_USERS); },
+        create: async dto     => { await wait(500); return { id:'u'+Date.now(), isActive:true, ...dto }; },
+        update: async (id,dto)=> { await wait(400); return dto; },
+        delete: async id      => { await wait(300); },
+      },
+    };
+
+    /* ── API réelle ── */
+    let _rToken = localStorage.getItem('wa_token') || null;
+    function setRT(t) { _rToken=t; t?localStorage.setItem('wa_token',t):localStorage.removeItem('wa_token'); }
+    async function req(method,path,body) {
+      const h={'Content-Type':'application/json'};
+      if(_rToken) h['Authorization']='Bearer '+_rToken;
+      const res=await fetch(CFG.apiBase+path,{method,headers:h,body:body!==undefined?JSON.stringify(body):undefined});
+      if(res.status===401){setRT(null);global.dispatchEvent(new Event('wa:auth-expired'));throw new Error('Session expirée');}
+      const txt=await res.text();let d;try{d=JSON.parse(txt);}catch{d=txt;}
+      if(!res.ok) throw new Error(d?.message||d||res.statusText);
+      return d;
+    }
+    const get=(p)=>req('GET',p), post=(p,b)=>req('POST',p,b), put=(p,b)=>req('PUT',p,b), del=(p)=>req('DELETE',p), patch=(p,b)=>req('PATCH',p,b);
+    const realAPI = {
+      auth:{ login:(e,pw)=>post('/auth/login',{email:e,password:pw}).then(r=>{setRT(r.access_token);return r;}), me:()=>get('/auth/me'), logout:()=>setRT(null), setToken:setRT, getToken:()=>_rToken },
+      branding:{ get:cId=>get(`/branding/${cId}`), update:(cId,d)=>put(`/branding/${cId}`,d) },
+      ceremonies:{ list:()=>get('/ceremonies'), get:id=>get(`/ceremonies/${id}`), create:d=>post('/ceremonies',d), update:(id,d)=>put(`/ceremonies/${id}`,d) },
+      guests:{ list:(cId,q)=>get(`/guests?ceremonyId=${cId||''}${q?'&q='+encodeURIComponent(q):''}`), stats:cId=>get(`/guests/stats?ceremonyId=${cId||''}`), get:id=>get(`/guests/${id}`), create:d=>post('/guests',d), update:(id,d)=>put(`/guests/${id}`,d), delete:id=>del(`/guests/${id}`) },
+      qr:{ generate:id=>post(`/qr/${id}`), regenerate:id=>post(`/qr/${id}/regenerate`) },
+      invitations:{ generate:id=>post(`/invitations/${id}`), download:id=>`${CFG.apiBase}/invitations/${id}/pdf` },
+      tables:{ list:cId=>get(`/seating?ceremonyId=${cId||''}`), create:d=>post('/seating',d), update:(id,d)=>put(`/seating/${id}`,d), delete:id=>del(`/seating/${id}`), assign:(gId,tId)=>patch('/seating/assign',{guestId:gId,tableId:tId}) },
+      scan:{ verify:t=>post('/scans/verify',{token:t}), markEntry:t=>post('/scans/mark-entry',{token:t}), history:(cId,p)=>get(`/scans/history?ceremonyId=${cId||''}&page=${p||1}`) },
+      stats:{ live:cId=>get(`/stats/live?ceremonyId=${cId||''}`) },
+      users:{ list:()=>get('/users'), create:d=>post('/users',d), update:(id,d)=>put(`/users/${id}`,d), delete:id=>del(`/users/${id}`) },
+    };
+
+    global.WA = DEMO ? mockAPI : realAPI;
+    global.WA_DEMO = DEMO;
+  })(window);
+  </script>
+
+  <!-- ── Composants React (JSX compilé à la volée par Babel) ─ -->
+  <script type="text/babel" data-presets="env,react">
+  const { useState, useEffect, useRef, useCallback } = React;
+
+  /* ════════════════════════════════════════════════════════
+     BRANDING
+  ════════════════════════════════════════════════════════ */
+  function WeddingMonogram({ coupleName='M & J', size=120 }) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="58" fill="none" stroke="var(--wa-gold)" strokeWidth=".8" strokeDasharray="2,4"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--wa-gold)" strokeWidth=".4"/>
+        <text x="60" y="67" textAnchor="middle" fontFamily="Cormorant Garamond,Georgia,serif" fontSize="28" fontWeight="300" fill="var(--wa-gold)" letterSpacing="6">{coupleName}</text>
+      </svg>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     LOGIN
+  ════════════════════════════════════════════════════════ */
+  function LoginScreen({ onLogin }) {
+    const [email, setEmail]     = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError]     = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const fillDemo = (e, p) => { setEmail(e); setPassword(p); setError(''); };
+
+    async function handleSubmit(ev) {
+      ev.preventDefault(); setError(''); setLoading(true);
+      try {
+        const res = await WA.auth.login(email, password);
+        onLogin(res.user, res.access_token);
+      } catch (err) {
+        setError(err.message || 'Identifiants incorrects');
+      } finally { setLoading(false); }
+    }
+
+    return (
+      <div className="wa-login-wrap">
+        <div className="wa-login-box">
+          <div className="wa-login-logo">
+            <WeddingMonogram size={72} />
+            <h1 style={{marginTop:'.5rem'}}>Wedding Access</h1>
+            <p>Plateforme cérémonie · 4 Juillet 2026</p>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="wa-form-group">
+              <label className="wa-form-label">Adresse e-mail</label>
+              <input className="wa-input" type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoFocus placeholder="prenom@example.com" />
+            </div>
+            <div className="wa-form-group">
+              <label className="wa-form-label">Mot de passe</label>
+              <input className="wa-input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="••••••••" />
+            </div>
+            {error && <div className="wa-form-error" style={{whiteSpace:'pre-line'}}>{error}</div>}
+            <button className="wa-btn wa-btn-primary" style={{width:'100%',justifyContent:'center',marginTop:'1.25rem',padding:'.75rem'}} type="submit" disabled={loading}>
+              {loading ? 'Connexion…' : 'Se connecter'}
+            </button>
+          </form>
+
+          {window.WA_DEMO && (
+            <div className="wa-demo-hint">
+              <strong>Mode démo</strong> — cliquez pour vous connecter :
+              <div style={{marginTop:'.5rem',display:'flex',flexDirection:'column',gap:'.25rem'}}>
+                {[
+                  ['admin@demo.fr','demo','Super Admin'],
+                  ['vin@demo.fr','demo','Vin d\'honneur'],
+                  ['diner@demo.fr','demo','Dîner'],
+                ].map(([e,p,label]) => (
+                  <button key={e} type="button" className="wa-btn wa-btn-ghost" style={{justifyContent:'flex-start',fontSize:'12px',padding:'.25rem .5rem'}} onClick={()=>fillDemo(e,p)}>
+                    <span style={{color:'var(--wa-gold)',fontWeight:600}}>{e}</span>
+                    <span style={{color:'var(--wa-muted)',marginLeft:'auto'}}>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     DASHBOARD
+  ════════════════════════════════════════════════════════ */
+  function StatCard({ value, label, color }) {
+    return (
+      <div className="wa-stat">
+        <div className="wa-stat-value" style={color?{color}:{}}>{value}</div>
+        <div className="wa-stat-label">{label}</div>
+      </div>
+    );
+  }
+
+  function DashboardScreen({ user }) {
+    const [stats, setStats] = useState(null);
+    useEffect(() => {
+      WA.guests.stats(user.ceremonyId||'').then(setStats).catch(()=>{});
+    }, []);
+
+    return (
+      <div>
+        <div className="wa-stat-grid">
+          <StatCard value={stats?.total??'—'}    label="Total invités" />
+          <StatCard value={stats?.arrived??'—'}  label="Arrivés"   color="var(--wa-success)" />
+          <StatCard value={stats?.confirmed??'—'}label="Confirmés" color="var(--wa-info)" />
+          <StatCard value={stats?.absent??'—'}   label="Absents"   color="var(--wa-error)" />
+        </div>
+        <div className="wa-card">
+          <div className="wa-card-title">Bienvenue, {user.firstName} {user.lastName}</div>
+          <p style={{color:'var(--wa-muted)',fontSize:'13px',marginTop:'.25rem'}}>
+            {user.role?.replace(/_/g,' ')} — utilisez le menu pour gérer les invités, scanner les QR codes et générer les invitations.
+          </p>
+          {window.WA_DEMO && (
+            <p style={{marginTop:'.75rem',fontSize:'12px',color:'var(--wa-gold-dark)',background:'var(--wa-stone)',padding:'.5rem .75rem',borderRadius:'var(--wa-radius)',display:'inline-block'}}>
+              Mode démo — toutes les données sont fictives et temporaires.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     GUESTS
+  ════════════════════════════════════════════════════════ */
+  function GuestsScreen({ user }) {
+    const [guests, setGuests] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch]   = useState('');
+    const [showAdd, setShowAdd] = useState(false);
+    const debRef = useRef(null);
+
+    const load = (q='') => {
+      setLoading(true);
+      WA.guests.list(user.ceremonyId||'', q).then(setGuests).catch(()=>{}).finally(()=>setLoading(false));
+    };
+
+    useEffect(()=>{ load(); }, []);
+
+    const handleSearch = v => {
+      setSearch(v);
+      clearTimeout(debRef.current);
+      debRef.current = setTimeout(()=>load(v), 300);
+    };
+
+    const statusBadge = s => {
+      const map={INVITED:'info',CONFIRMED:'success',ARRIVED:'success',ABSENT:'error',PENDING:'muted'};
+      const lbl={INVITED:'Invité',CONFIRMED:'Confirmé',ARRIVED:'Arrivé',ABSENT:'Absent',PENDING:'En attente'};
+      return <span className={`wa-badge wa-badge-${map[s]||'muted'}`}>{lbl[s]||s}</span>;
+    };
+
+    const handleQR = async g => {
+      try {
+        await WA.qr.generate(g.id);
+        load(search);
+      } catch(e) { alert(e.message); }
+    };
+
+    const handlePDF = g => {
+      if (window.WA_DEMO) { alert('Mode démo — le téléchargement PDF nécessite un backend réel.'); return; }
+      const url = WA.invitations.download(g.id);
+      if (url) window.open(url, '_blank');
+    };
+
+    return (
+      <div>
+        <div className="wa-flex-between wa-mb">
+          <input className="wa-input" style={{maxWidth:'280px'}} placeholder="Rechercher…" value={search} onChange={e=>handleSearch(e.target.value)} />
+          <button className="wa-btn wa-btn-primary" onClick={()=>setShowAdd(true)}>+ Ajouter</button>
+        </div>
+
+        {showAdd && <AddGuestForm ceremonyId={user.ceremonyId||'c1'} onClose={()=>setShowAdd(false)} onSaved={()=>{setShowAdd(false);load(search);}} />}
+
+        <div className="wa-card" style={{padding:0,overflow:'hidden'}}>
+          <div className="wa-table-wrap">
+            <table className="wa-table">
+              <thead><tr>
+                <th>Nom</th><th>Prénom</th><th>Table</th><th>Statut</th><th>QR</th><th>Actions</th>
+              </tr></thead>
+              <tbody>
+                {loading && <tr><td colSpan="6" style={{textAlign:'center',color:'var(--wa-muted)',padding:'2rem'}}>Chargement…</td></tr>}
+                {!loading && guests.length===0 && <tr><td colSpan="6" style={{textAlign:'center',color:'var(--wa-muted)',padding:'2rem'}}>Aucun invité trouvé</td></tr>}
+                {guests.map(g=>(
+                  <tr key={g.id}>
+                    <td style={{fontWeight:500}}>{g.lastName}</td>
+                    <td>{g.firstName}</td>
+                    <td>{g.tableNumber||<span className="wa-text-muted">—</span>}</td>
+                    <td>{statusBadge(g.entryStatus)}</td>
+                    <td>{g.qrToken?<span className="wa-badge wa-badge-success">✓</span>:<span className="wa-badge wa-badge-muted">—</span>}</td>
+                    <td style={{whiteSpace:'nowrap'}}>
+                      <button className="wa-btn wa-btn-ghost" style={{fontSize:'12px',padding:'.25rem .5rem'}} onClick={()=>handleQR(g)}>QR</button>
+                      <button className="wa-btn wa-btn-ghost" style={{fontSize:'12px',padding:'.25rem .5rem',marginLeft:'.25rem'}} onClick={()=>handlePDF(g)}>PDF</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function AddGuestForm({ ceremonyId, onClose, onSaved }) {
+    const [form, setForm] = useState({ firstName:'', lastName:'', email:'', tableNumber:'' });
+    const [saving, setSaving] = useState(false);
+    const [err, setErr] = useState('');
+    const set = (k,v) => setForm(f=>({...f,[k]:v}));
+    async function submit(ev) {
+      ev.preventDefault(); setSaving(true); setErr('');
+      try { await WA.guests.create({...form, ceremonyId}); onSaved(); }
+      catch(e) { setErr(e.message); }
+      finally { setSaving(false); }
+    }
+    return (
+      <div className="wa-card wa-mb" style={{maxWidth:'480px'}}>
+        <div className="wa-card-title">Ajouter un invité</div>
+        <form onSubmit={submit}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.75rem',marginTop:'1rem'}}>
+            <div className="wa-form-group" style={{margin:0}}><label className="wa-form-label">Prénom *</label><input className="wa-input" value={form.firstName} onChange={e=>set('firstName',e.target.value)} required /></div>
+            <div className="wa-form-group" style={{margin:0}}><label className="wa-form-label">Nom *</label><input className="wa-input" value={form.lastName} onChange={e=>set('lastName',e.target.value)} required /></div>
+            <div className="wa-form-group" style={{margin:0}}><label className="wa-form-label">E-mail</label><input className="wa-input" type="email" value={form.email} onChange={e=>set('email',e.target.value)} /></div>
+            <div className="wa-form-group" style={{margin:0}}><label className="wa-form-label">Table</label><input className="wa-input" value={form.tableNumber} onChange={e=>set('tableNumber',e.target.value)} /></div>
+          </div>
+          {err && <div className="wa-form-error" style={{marginTop:'.5rem'}}>{err}</div>}
+          <div className="wa-flex wa-gap-sm" style={{marginTop:'1rem'}}>
+            <button className="wa-btn wa-btn-primary" type="submit" disabled={saving}>{saving?'Enregistrement…':'Ajouter'}</button>
+            <button className="wa-btn wa-btn-ghost" type="button" onClick={onClose}>Annuler</button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     SCANNER
+  ════════════════════════════════════════════════════════ */
+  function ScannerScreen({ user }) {
+    const videoRef  = useRef(null);
+    const streamRef = useRef(null);
+    const detRef    = useRef(null);
+    const rafRef    = useRef(null);
+    const [cameraOn, setCameraOn] = useState(false);
+    const [manual, setManual]     = useState('');
+    const [result, setResult]     = useState(null);
+    const [loading, setLoading]   = useState(false);
+    const [step, setStep]         = useState('idle');
+
+    const stopCamera = useCallback(() => {
+      cancelAnimationFrame(rafRef.current);
+      streamRef.current?.getTracks().forEach(t=>t.stop());
+      streamRef.current=null; setCameraOn(false);
+    }, []);
+
+    useEffect(()=>()=>stopCamera(), [stopCamera]);
+
+    async function startCamera() {
+      setResult(null); setStep('idle');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+        streamRef.current=stream;
+        if(videoRef.current) videoRef.current.srcObject=stream;
+        setCameraOn(true);
+        if('BarcodeDetector' in window) {
+          detRef.current=new BarcodeDetector({formats:['qr_code']});
+          scheduleScan();
+        }
+      } catch { alert("Caméra inaccessible. Utilisez la saisie manuelle."); }
+    }
+
+    function scheduleScan() {
+      rafRef.current=requestAnimationFrame(async()=>{
+        if(!videoRef.current||!detRef.current||!streamRef.current) return;
+        try {
+          const codes=await detRef.current.detect(videoRef.current);
+          if(codes.length>0){stopCamera();await handleToken(codes[0].rawValue);return;}
+        } catch {}
+        scheduleScan();
+      });
+    }
+
+    async function handleToken(token) {
+      setLoading(true); setResult(null); setStep('idle');
+      try {
+        const data=await WA.scan.verify(token);
+        setResult({type:'verify',...data,token}); setStep('verified');
+      } catch(e) {
+        setResult({type:'error',message:e.message}); setStep('idle');
+      } finally { setLoading(false); }
+    }
+
+    async function confirmEntry() {
+      if(!result?.token) return;
+      setLoading(true);
+      try {
+        await WA.scan.markEntry(result.token);
+        setResult(r=>({...r,type:'success',message:"Entrée enregistrée avec succès."}));
+        setStep('done');
+      } catch(e) {
+        setResult(r=>({...r,type:'error',message:e.message})); setStep('idle');
+      } finally { setLoading(false); }
+    }
+
+    async function demoScan() {
+      const withQR = (window._guests||[]).filter?.(g=>g.qrToken&&g.entryStatus!=='ARRIVED');
+      const pick = withQR?.[0];
+      if (!pick) { alert("Tous les invités avec QR sont déjà arrivés. Rechargez la page pour réinitialiser."); return; }
+      await handleToken(pick.qrToken);
+    }
+
+    const reset = () => { setResult(null); setStep('idle'); setManual(''); };
+
+    return (
+      <div className="wa-scanner-page">
+        <div style={{width:'100%',textAlign:'center'}}>
+          <h2 style={{fontFamily:'var(--wa-font-serif)',fontSize:'1.5rem',fontWeight:300,color:'var(--wa-gold)',marginBottom:'.25rem'}}>Scanner d'entrée</h2>
+          <p style={{fontSize:'12px',color:'var(--wa-muted)'}}>Vin d'honneur · 4 juillet 2026</p>
+        </div>
+
+        <div className="wa-scanner-viewport" style={{display:cameraOn?'block':'none'}}>
+          <video ref={videoRef} autoPlay playsInline muted style={{width:'100%',height:'100%',objectFit:'cover'}} />
+          <div className="wa-scanner-overlay"><div className="wa-scanner-frame"/></div>
+        </div>
+
+        {!cameraOn && step==='idle' && (
+          <button className="wa-btn wa-btn-primary" style={{width:'100%',padding:'.875rem',justifyContent:'center',fontSize:'15px'}} onClick={startCamera}>
+            ⬡ Activer la caméra
+          </button>
+        )}
+        {cameraOn && <button className="wa-btn wa-btn-secondary" style={{width:'100%',justifyContent:'center'}} onClick={stopCamera}>Arrêter la caméra</button>}
+
+        {step==='idle' && (
+          <div style={{width:'100%'}}>
+            <label className="wa-form-label">Saisir le code manuellement</label>
+            <div className="wa-flex wa-gap-sm" style={{marginTop:'.375rem'}}>
+              <input className="wa-input" placeholder="WA-V-G001-2026.abc123456789" value={manual} onChange={e=>setManual(e.target.value)} onKeyDown={e=>e.key==='Enter'&&manual.trim()&&handleToken(manual.trim())} />
+              <button className="wa-btn wa-btn-primary" disabled={!manual.trim()||loading} onClick={()=>handleToken(manual.trim())} style={{flexShrink:0}}>Vérifier</button>
+            </div>
+            {window.WA_DEMO && (
+              <button className="wa-btn wa-btn-secondary" style={{width:'100%',justifyContent:'center',marginTop:'.75rem'}} onClick={demoScan}>
+                ⬡ Simuler un scan (démo)
+              </button>
+            )}
+          </div>
+        )}
+
+        {loading && <div style={{color:'var(--wa-muted)',fontSize:'13px'}}>Vérification en cours…</div>}
+
+        {result && !loading && (
+          <div className={`wa-scanner-result ${step==='done'?'success':result.type==='error'?'error':result.type==='verify'?'warning':'success'}`} style={{width:'100%'}}>
+            {result.type==='verify' && <>
+              <h3>Invité identifié</h3>
+              {result.guest && <p><strong>{result.guest.firstName} {result.guest.lastName}</strong><br/>{result.guest.tableNumber&&`Table ${result.guest.tableNumber}`}<br/>Statut : {result.guest.entryStatus}</p>}
+              <div className="wa-flex wa-gap-sm" style={{marginTop:'.75rem'}}>
+                <button className="wa-btn wa-btn-primary" onClick={confirmEntry} disabled={loading}>✓ Valider l'entrée</button>
+                <button className="wa-btn wa-btn-ghost" onClick={reset}>Annuler</button>
+              </div>
+            </>}
+            {step==='done' && <>
+              <h3>Entrée validée !</h3>
+              {result.guest && <p><strong>{result.guest.firstName} {result.guest.lastName}</strong> — bienvenue !</p>}
+              <button className="wa-btn wa-btn-ghost" style={{marginTop:'.75rem'}} onClick={reset}>Scanner suivant</button>
+            </>}
+            {result.type==='error' && <>
+              <h3>Accès refusé</h3>
+              <p>{result.message}</p>
+              <button className="wa-btn wa-btn-ghost" style={{marginTop:'.75rem'}} onClick={reset}>Réessayer</button>
+            </>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     INVITATIONS
+  ════════════════════════════════════════════════════════ */
+  function InvitationsScreen({ user }) {
+    return (
+      <div className="wa-card">
+        <div className="wa-card-title">Invitations PDF</div>
+        <p style={{color:'var(--wa-muted)',fontSize:'13px',marginTop:'.5rem'}}>
+          Accédez à la liste des invités pour générer et télécharger les invitations individuelles.
+          {window.WA_DEMO && <><br/><span style={{color:'var(--wa-warning)'}}>Mode démo — le téléchargement PDF nécessite un backend déployé.</span></>}
+        </p>
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     SEATING
+  ════════════════════════════════════════════════════════ */
+  function SeatingScreen({ user }) {
+    const [tables, setTables] = useState([]);
+    useEffect(() => { WA.tables.list(user.ceremonyId||'').then(setTables).catch(()=>{}); }, []);
+    return (
+      <div>
+        <div className="wa-stat-grid">
+          {tables.map(t=>(
+            <div key={t.id} className="wa-stat">
+              <div className="wa-stat-value" style={{fontSize:'1.75rem'}}>Table {t.number}</div>
+              <div className="wa-stat-label">{t.name||'—'}</div>
+              <div style={{marginTop:'.5rem',fontSize:'12px',color:'var(--wa-muted)'}}>{t.capacity} places</div>
+            </div>
+          ))}
+        </div>
+        {tables.length===0 && <div className="wa-card"><p style={{color:'var(--wa-muted)',fontSize:'13px'}}>Aucune table configurée.</p></div>}
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     HISTORY
+  ════════════════════════════════════════════════════════ */
+  function HistoryScreen({ user }) {
+    const [scans, setScans] = useState([]);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+      WA.scan.history(user.ceremonyId||'', 1).then(r=>setScans(r.data||r)).catch(()=>{}).finally(()=>setLoading(false));
+    }, []);
+
+    const resultBadge = r => {
+      const m={OK:'success',ALREADY_SCANNED:'warning',INVALID_TOKEN:'error',WRONG_CEREMONY:'error'};
+      const l={OK:'OK',ALREADY_SCANNED:'Déjà scanné',INVALID_TOKEN:'Invalide',WRONG_CEREMONY:'Mauvaise cérémonie'};
+      return <span className={`wa-badge wa-badge-${m[r]||'muted'}`}>{l[r]||r}</span>;
+    };
+
+    return (
+      <div className="wa-card" style={{padding:0,overflow:'hidden'}}>
+        <div className="wa-table-wrap">
+          <table className="wa-table">
+            <thead><tr><th>Date/Heure</th><th>Invité</th><th>Résultat</th><th>Agent</th></tr></thead>
+            <tbody>
+              {loading && <tr><td colSpan="4" style={{textAlign:'center',padding:'2rem',color:'var(--wa-muted)'}}>Chargement…</td></tr>}
+              {!loading&&scans.length===0 && <tr><td colSpan="4" style={{textAlign:'center',padding:'2rem',color:'var(--wa-muted)'}}>Aucun scan enregistré</td></tr>}
+              {scans.map((s,i)=>(
+                <tr key={i}>
+                  <td style={{whiteSpace:'nowrap'}}>{new Date(s.scannedAt).toLocaleString('fr-FR')}</td>
+                  <td>{s.guest?`${s.guest.firstName} ${s.guest.lastName}`:'—'}</td>
+                  <td>{resultBadge(s.result)}</td>
+                  <td style={{color:'var(--wa-muted)',fontSize:'12px'}}>{s.scannedBy?.email||'—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     USERS (SUPER_ADMIN)
+  ════════════════════════════════════════════════════════ */
+  function UsersScreen({ user }) {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => { WA.users.list().then(setUsers).catch(()=>{}).finally(()=>setLoading(false)); }, []);
+    return (
+      <div className="wa-card" style={{padding:0,overflow:'hidden'}}>
+        <div className="wa-table-wrap">
+          <table className="wa-table">
+            <thead><tr><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Statut</th></tr></thead>
+            <tbody>
+              {loading&&<tr><td colSpan="4" style={{textAlign:'center',padding:'2rem',color:'var(--wa-muted)'}}>Chargement…</td></tr>}
+              {users.map(u=>(
+                <tr key={u.id}>
+                  <td>{u.firstName} {u.lastName}</td>
+                  <td style={{fontSize:'12px'}}>{u.email}</td>
+                  <td><span className="wa-badge wa-badge-info">{u.role?.replace(/_/g,' ')}</span></td>
+                  <td><span className={`wa-badge wa-badge-${u.isActive?'success':'muted'}`}>{u.isActive?'Actif':'Inactif'}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     SHELL
+  ════════════════════════════════════════════════════════ */
+  const NAV = [
+    { id:'dashboard',   label:'Tableau de bord',icon:'◈', roles:['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
+    { id:'guests',      label:'Invités',         icon:'◉', roles:['SUPER_ADMIN','ADMIN_VIN_HONNEUR','AGENT_VIN_HONNEUR','AGENT_DINER'] },
+    { id:'scanner',     label:'Scanner QR',      icon:'⬡', roles:['SUPER_ADMIN','ADMIN_VIN_HONNEUR','AGENT_VIN_HONNEUR','AGENT_DINER'] },
+    { id:'invitations', label:'Invitations PDF', icon:'✉', roles:['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
+    { id:'seating',     label:'Plan de table',   icon:'⊞', roles:['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
+    { id:'history',     label:'Historique scans',icon:'◷', roles:['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
+    { id:'users',       label:'Utilisateurs',    icon:'◎', roles:['SUPER_ADMIN'] },
+  ];
+
+  function ThemeToggle() {
+    const [theme, setTheme] = useState(document.body.dataset.theme||'day');
+    const toggle = () => {
+      const next=theme==='day'?'night':'day';
+      document.body.dataset.theme=next; setTheme(next);
+    };
+    return <button className="wa-btn wa-btn-ghost" onClick={toggle} title="Changer de thème">{theme==='day'?'☽':'☀'}</button>;
+  }
+
+  function Shell({ user, branding, onLogout }) {
+    const [screen, setScreen] = useState('dashboard');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const visibleNav = NAV.filter(n=>n.roles.includes(user.role));
+
+    return (
+      <div className="wa-layout">
+        {sidebarOpen && <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.4)',zIndex:99}} onClick={()=>setSidebarOpen(false)}/>}
+
+        <aside className={`wa-sidebar${sidebarOpen?' open':''}`}>
+          <div className="wa-sidebar-logo">
+            <h1>{branding?.coupleName||'Wedding Access'}</h1>
+            <p>{branding?.eventDate ? new Date(branding.eventDate).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '4 Juillet 2026'}
+              {window.WA_DEMO && <span className="wa-demo-badge">DÉMO</span>}
+            </p>
+          </div>
+
+          <nav className="wa-nav">
+            {visibleNav.map(item=>(
+              <button key={item.id} className={`wa-nav-item${screen===item.id?' active':''}`} onClick={()=>{setScreen(item.id);setSidebarOpen(false);}}>
+                <span style={{fontSize:'16px',width:'20px',textAlign:'center'}}>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="wa-sidebar-footer">
+            <div style={{fontSize:'12px',color:'var(--wa-muted)',marginBottom:'.5rem',paddingLeft:'.25rem'}}>
+              {user.firstName} {user.lastName}<br/>
+              <span style={{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.05em'}}>{user.role?.replace(/_/g,' ')}</span>
+            </div>
+            <button className="wa-btn wa-btn-ghost" style={{width:'100%',justifyContent:'center'}} onClick={onLogout}>Déconnexion</button>
+          </div>
+        </aside>
+
+        <main className="wa-main">
+          <header className="wa-topbar">
+            <button className="wa-btn wa-btn-ghost" id="sidebar-toggle" style={{padding:'.375rem',display:'none'}} onClick={()=>setSidebarOpen(!sidebarOpen)}>☰</button>
+            <span className="wa-topbar-title">{visibleNav.find(n=>n.id===screen)?.label||'Wedding Access'}</span>
+            <ThemeToggle />
+          </header>
+          <div className="wa-page">
+            {screen==='dashboard'   && <DashboardScreen user={user}/>}
+            {screen==='guests'      && <GuestsScreen user={user}/>}
+            {screen==='scanner'     && <ScannerScreen user={user}/>}
+            {screen==='invitations' && <InvitationsScreen user={user}/>}
+            {screen==='seating'     && <SeatingScreen user={user}/>}
+            {screen==='history'     && <HistoryScreen user={user}/>}
+            {screen==='users'       && <UsersScreen user={user}/>}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     APP ROOT
+  ════════════════════════════════════════════════════════ */
+  function App() {
+    const [user, setUser]       = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [branding, setBranding] = useState(null);
+
+    const logout = useCallback(()=>{ WA.auth.logout(); setUser(null); setBranding(null); }, []);
+
+    useEffect(()=>{
+      window.addEventListener('wa:auth-expired', logout);
+      return ()=>window.removeEventListener('wa:auth-expired', logout);
+    }, [logout]);
+
+    useEffect(()=>{
+      if(!WA.auth.getToken()){ setLoading(false); return; }
+      WA.auth.me()
+        .then(me=>{ setUser(me); return WA.branding.get(me.ceremonyId||'default').catch(()=>null); })
+        .then(b=>{ if(b) setBranding(b); })
+        .catch(()=>WA.auth.logout())
+        .finally(()=>setLoading(false));
+    }, []);
+
+    if(loading) return null;
+
+    if(!user) return (
+      <LoginScreen onLogin={(me, token)=>{
+        WA.auth.setToken(token);
+        setUser(me);
+        WA.branding.get(me.ceremonyId||'default').then(b=>{ if(b) setBranding(b); }).catch(()=>{});
+      }}/>
+    );
+
+    return <Shell user={user} branding={branding} onLogout={logout}/>;
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>

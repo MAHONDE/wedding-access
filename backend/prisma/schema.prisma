@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN_VIN_HONNEUR
+  AGENT_VIN_HONNEUR
+  AGENT_DINER
+}
+
+enum CeremonyType {
+  VIN_HONNEUR
+  DINER
+}
+
+enum EntryStatus {
+  PENDING
+  INVITED
+  CONFIRMED
+  ARRIVED
+  ABSENT
+}
+
+enum ScanResult {
+  OK
+  ALREADY_SCANNED
+  INVALID_TOKEN
+  WRONG_CEREMONY
+  NOT_CONFIRMED
+}
+
+enum InvitationStatus {
+  PENDING
+  GENERATED
+  SENT
+}
+
+enum TemplateType {
+  PDF
+  IMAGE
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         Role
+  ceremonyId   String?
+  ceremony     Ceremony?   @relation(fields: [ceremonyId], references: [id])
+  isActive     Boolean     @default(true)
+  scans        Scan[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Ceremony {
+  id          String       @id @default(cuid())
+  name        String
+  type        CeremonyType
+  date        DateTime
+  venue       String?
+  users       User[]
+  guests      Guest[]
+  tables      Table[]
+  branding    Branding?
+  templates   PdfTemplate[]
+  scans       Scan[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Guest {
+  id             String           @id @default(cuid())
+  ceremonyId     String
+  ceremony       Ceremony         @relation(fields: [ceremonyId], references: [id])
+  firstName      String
+  lastName       String
+  email          String?
+  phone          String?
+  tableId        String?
+  table          Table?           @relation(fields: [tableId], references: [id])
+  tableNumber    String?
+  entryStatus    EntryStatus      @default(INVITED)
+  qrToken        String?          @unique
+  qrCodePath     String?
+  invitationPath String?
+  invitationStatus InvitationStatus @default(PENDING)
+  scans          Scan[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Table {
+  id         String    @id @default(cuid())
+  ceremonyId String
+  ceremony   Ceremony  @relation(fields: [ceremonyId], references: [id])
+  number     String
+  name       String?
+  capacity   Int       @default(10)
+  guests     Guest[]
+  createdAt  DateTime  @default(now())
+}
+
+model Scan {
+  id         String     @id @default(cuid())
+  ceremonyId String
+  ceremony   Ceremony   @relation(fields: [ceremonyId], references: [id])
+  guestId    String?
+  guest      Guest?     @relation(fields: [guestId], references: [id])
+  scannedById String?
+  scannedBy  User?      @relation(fields: [scannedById], references: [id])
+  token      String
+  result     ScanResult
+  scannedAt  DateTime   @default(now())
+}
+
+model Branding {
+  id          String    @id @default(cuid())
+  ceremonyId  String    @unique
+  ceremony    Ceremony  @relation(fields: [ceremonyId], references: [id])
+  coupleName  String    @default("M & J")
+  eventDate   DateTime?
+  primaryColor String   @default("#C9A84C")
+  accentColor  String   @default("#E8D5A0")
+  fontFamily   String   @default("Cormorant Garamond")
+  monogramPath String?
+  logoPath     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model PdfTemplate {
+  id         String       @id @default(cuid())
+  ceremonyId String
+  ceremony   Ceremony     @relation(fields: [ceremonyId], references: [id])
+  type       TemplateType @default(PDF)
+  name       String
+  filePath   String
+  isActive   Boolean      @default(true)
+  qrX        Float        @default(300)
+  qrY        Float        @default(400)
+  qrSize     Float        @default(80)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
