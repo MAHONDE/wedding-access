@@ -9,6 +9,7 @@ RUN npm run build
 
 FROM node:20-alpine
 
+RUN apk add --no-cache openssl
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 
