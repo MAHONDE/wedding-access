@@ -125,12 +125,12 @@ function Shell({ user, branding, onBrandingUpdate, onLogout }) {
         </header>
 
         <div className="wa-page">
-          {screen === 'dashboard'   && <DashboardScreen user={user} />}
+          {screen === 'dashboard'   && <DashboardScreen user={user} branding={branding} />}
           {screen === 'guests'      && <GuestsScreen user={user} />}
           {screen === 'invitations' && <InvitationsScreen user={user} />}
           {screen === 'templates'   && <TemplatesScreen user={user} />}
           {screen === 'seating'     && <SeatingScreen user={user} />}
-          {screen === 'scanner'     && <ScannerScreen user={user} />}
+          {screen === 'scanner'     && <ScannerScreen user={user} branding={branding} />}
           {screen === 'history'     && <HistoryScreen user={user} />}
           {screen === 'users'       && <UsersScreen user={user} />}
           {screen === 'branding'    && <BrandingScreen user={user} branding={branding} onUpdate={onBrandingUpdate} />}

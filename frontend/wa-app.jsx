@@ -49,7 +49,17 @@ function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="wa-splash">
+      <div style={{ animation:'wa-monogram-fadein .8s ease both' }}>
+        <WeddingMonogram size={110} />
+      </div>
+      <p className="wa-splash-title">Wedding Access</p>
+      <div className="wa-splash-dots">
+        <span /><span /><span />
+      </div>
+    </div>
+  );
 
   if (!user) {
     return (

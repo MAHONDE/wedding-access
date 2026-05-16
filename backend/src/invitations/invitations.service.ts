@@ -78,6 +78,9 @@ export class InvitationsService {
       data: { isObsolete: true, status: 'OBSOLETE' },
     });
 
+    const branding = await this.prisma.appBranding.findFirst();
+    const monogramPath = branding?.monogramPath || null;
+
     const activeTemplate = guest.ceremony.templates[0] || null;
     const dir = path.join(STORAGE, 'invitations');
     fs.mkdirSync(dir, { recursive: true });
@@ -85,9 +88,9 @@ export class InvitationsService {
     let tmpPath: string;
 
     if (activeTemplate) {
-      tmpPath = await this.generateFromTemplate(guest, qrCode, activeTemplate, dir);
+      tmpPath = await this.generateFromTemplate(guest, qrCode, activeTemplate, dir, monogramPath);
     } else {
-      tmpPath = await this.generateDefault(guest, qrCode, dir);
+      tmpPath = await this.generateDefault(guest, qrCode, dir, monogramPath);
     }
 
     const baseFileName = this.buildGuestFileName(guest);
@@ -117,7 +120,7 @@ export class InvitationsService {
     return invitation;
   }
 
-  private async generateDefault(guest: any, qrCode: any, dir: string): Promise<string> {
+  private async generateDefault(guest: any, qrCode: any, dir: string, monogramPath?: string | null): Promise<string> {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([420, 595]);
     const fontSerif = await pdfDoc.embedFont(StandardFonts.TimesRoman);
@@ -132,29 +135,43 @@ export class InvitationsService {
     page.drawRectangle({ x: 12, y: 12, width: width - 24, height: height - 24, borderColor: gold, borderWidth: 0.8 });
     page.drawRectangle({ x: 18, y: 18, width: width - 36, height: height - 36, borderColor: gold, borderWidth: 0.3 });
 
+    // Embed couple monogram at top center
+    let yShift = 0;
+    if (monogramPath && fs.existsSync(monogramPath)) {
+      try {
+        const imgBytes = fs.readFileSync(monogramPath);
+        let monoImg;
+        try { monoImg = await pdfDoc.embedPng(imgBytes); }
+        catch { monoImg = await pdfDoc.embedJpg(imgBytes); }
+        const MONO_W = 80;
+        const MONO_H = Math.round(MONO_W * monoImg.height / monoImg.width);
+        page.drawImage(monoImg, { x: (width - MONO_W) / 2, y: height - MONO_H - 20, width: MONO_W, height: MONO_H });
+        yShift = MONO_H + 18;
+      } catch {}
+    }
+
     const ceremonyName = guest.ceremony.name || 'Mariage';
-    const coupleW = fontSerif.widthOfTextAtSize(ceremonyName, 24);
-    page.drawText(ceremonyName, { x: (width - coupleW) / 2, y: height - 80, size: 24, font: fontSerif, color: gold });
+    const coupleW = fontSerif.widthOfTextAtSize(ceremonyName, 22);
+    page.drawText(ceremonyName, { x: (width - coupleW) / 2, y: height - 80 - yShift, size: 22, font: fontSerif, color: gold });
 
     page.drawLine({
-      start: { x: 60, y: height - 100 },
-      end: { x: width - 60, y: height - 100 },
-      color: gold,
-      thickness: 0.5,
+      start: { x: 60, y: height - 100 - yShift },
+      end: { x: width - 60, y: height - 100 - yShift },
+      color: gold, thickness: 0.5,
     });
 
     const inviteText = 'vous invitent à célébrer leur mariage';
     const inviteW = fontSans.widthOfTextAtSize(inviteText, 10);
-    page.drawText(inviteText, { x: (width - inviteW) / 2, y: height - 130, size: 10, font: fontSans, color: muted });
+    page.drawText(inviteText, { x: (width - inviteW) / 2, y: height - 128 - yShift, size: 10, font: fontSans, color: muted });
 
     const guestName = guest.primaryName;
     const guestW = fontSerif.widthOfTextAtSize(guestName, 20);
-    page.drawText(guestName, { x: (width - guestW) / 2, y: height - 180, size: 20, font: fontSerif, color: dark });
+    page.drawText(guestName, { x: (width - guestW) / 2, y: height - 174 - yShift, size: 20, font: fontSerif, color: dark });
 
     if (guest.companionName) {
       const companionLabel = `& ${guest.companionName}`;
-      const compW = fontSerif.widthOfTextAtSize(companionLabel, 16);
-      page.drawText(companionLabel, { x: (width - compW) / 2, y: height - 210, size: 16, font: fontSerif, color: dark });
+      const compW = fontSerif.widthOfTextAtSize(companionLabel, 15);
+      page.drawText(companionLabel, { x: (width - compW) / 2, y: height - 202 - yShift, size: 15, font: fontSerif, color: dark });
     }
 
     const ceremDate = guest.ceremony.date
@@ -164,21 +181,21 @@ export class InvitationsService {
       : '';
     if (ceremDate) {
       const dateW = fontSans.widthOfTextAtSize(ceremDate, 11);
-      page.drawText(ceremDate, { x: (width - dateW) / 2, y: height - 250, size: 11, font: fontSans, color: muted });
+      page.drawText(ceremDate, { x: (width - dateW) / 2, y: height - 238 - yShift, size: 11, font: fontSans, color: muted });
     }
 
     if (guest.ceremony.location) {
       const locW = fontSans.widthOfTextAtSize(guest.ceremony.location, 10);
-      page.drawText(guest.ceremony.location, { x: (width - locW) / 2, y: height - 275, size: 10, font: fontSans, color: muted });
+      page.drawText(guest.ceremony.location, { x: (width - locW) / 2, y: height - 260 - yShift, size: 10, font: fontSans, color: muted });
     }
 
     if (guest.table) {
       const tableText = `Table : ${guest.table.name}`;
       const tableW = fontSerif.widthOfTextAtSize(tableText, 13);
-      page.drawText(tableText, { x: (width - tableW) / 2, y: height - 315, size: 13, font: fontSerif, color: gold });
+      page.drawText(tableText, { x: (width - tableW) / 2, y: height - 296 - yShift, size: 13, font: fontSerif, color: gold });
     }
 
-    const qrSize = 100;
+    const qrSize = yShift > 0 ? 88 : 100;
     const qrX = (width - qrSize) / 2;
     const qrY = 70;
     page.drawRectangle({ x: qrX - 4, y: qrY - 4, width: qrSize + 8, height: qrSize + 8, borderColor: gold, borderWidth: 0.5 });
@@ -205,12 +222,27 @@ export class InvitationsService {
     qrCode: any,
     template: any,
     dir: string,
+    monogramPath?: string | null,
   ): Promise<string> {
     try {
       const templateBytes = fs.readFileSync(template.filePath);
       const pdfDoc = await PDFDocument.load(templateBytes);
       const pages = pdfDoc.getPages();
       const page = pages[0];
+      const { width, height } = page.getSize();
+
+      // Add monogram in upper-right corner if available
+      if (monogramPath && fs.existsSync(monogramPath)) {
+        try {
+          const imgBytes = fs.readFileSync(monogramPath);
+          let monoImg;
+          try { monoImg = await pdfDoc.embedPng(imgBytes); }
+          catch { monoImg = await pdfDoc.embedJpg(imgBytes); }
+          const MONO_W = 60;
+          const MONO_H = Math.round(MONO_W * monoImg.height / monoImg.width);
+          page.drawImage(monoImg, { x: width - MONO_W - 14, y: height - MONO_H - 14, width: MONO_W, height: MONO_H });
+        } catch {}
+      }
 
       if (template.qrZoneConfig && qrCode.qrImagePath && fs.existsSync(qrCode.qrImagePath)) {
         const { x, y, width: w, height: h } = template.qrZoneConfig as any;
@@ -224,7 +256,7 @@ export class InvitationsService {
       fs.writeFileSync(tmpPath, bytes);
       return tmpPath;
     } catch {
-      return this.generateDefault(guest, qrCode, dir);
+      return this.generateDefault(guest, qrCode, dir, monogramPath);
     }
   }
 

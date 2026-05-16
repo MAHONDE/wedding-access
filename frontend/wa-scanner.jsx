@@ -1,7 +1,7 @@
 /* Wedding Access · Scanner QR */
 const { useState, useEffect, useRef, useCallback } = React;
 
-function ScannerScreen({ user }) {
+function ScannerScreen({ user, branding }) {
   const videoRef  = useRef(null);
   const streamRef = useRef(null);
   const detRef    = useRef(null);
@@ -140,6 +140,13 @@ function ScannerScreen({ user }) {
           <div className="wa-scanner-frame" />
         </div>
       </div>
+
+      {/* Monogram idle branding */}
+      {step === 'idle' && !cameraOn && branding?.monogramPath && (
+        <div className="wa-monogram-scanner">
+          <img src={WA.fileUrl(branding.monogramPath, 'branding')} alt="" />
+        </div>
+      )}
 
       {/* Camera controls */}
       {!cameraOn && step === 'idle' && (

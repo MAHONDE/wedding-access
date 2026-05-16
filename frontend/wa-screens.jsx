@@ -124,8 +124,10 @@ function LoginScreen({ branding, onLogin }) {
     <div className="wa-login-wrap">
       <div className="wa-login-box">
         <div className="wa-login-logo">
-          <WeddingMonogram logoUrl={monogramUrl} size={90} />
-          <h1 style={{ marginTop:'1rem' }}>{branding?.appName || 'Wedding Access'}</h1>
+          <div className="wa-monogram-login">
+            <WeddingMonogram logoUrl={monogramUrl} size={monogramUrl ? 160 : 80} />
+          </div>
+          <h1 style={{ marginTop: monogramUrl ? '.75rem' : '1rem' }}>{branding?.appName || 'Wedding Access'}</h1>
           <p>Plateforme de gestion cérémonie</p>
           <FloralDivider />
         </div>
@@ -167,7 +169,7 @@ function LoginScreen({ branding, onLogin }) {
 }
 
 /* ─── DashboardScreen ──────────────────────────────────────── */
-function DashboardScreen({ user }) {
+function DashboardScreen({ user, branding }) {
   const { ceremonies } = useCeremonies(user);
   const [statsMap, setStatsMap] = useState({});
 
@@ -222,6 +224,15 @@ function DashboardScreen({ user }) {
       )}
 
       <div className="wa-card">
+        {branding?.monogramPath && (
+          <div className="wa-monogram-hero">
+            <img
+              src={WA.fileUrl(branding.monogramPath, 'branding')}
+              alt=""
+              className="wa-monogram-hero-img"
+            />
+          </div>
+        )}
         <div className="wa-card-title">Bienvenue, {user.firstName}</div>
         <p style={{ color:'var(--wa-muted)', fontSize:'13px', marginTop:'.25rem' }}>
           Utilisez le menu pour gérer les invités, scanner les QR codes et générer les invitations.
