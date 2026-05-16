@@ -34,4 +34,12 @@ export class ScansController {
   ) {
     return this.service.history(user, ceremonyId, page ? Number(page) : 1);
   }
+
+  @Get('stats')
+  stats(
+    @CurrentUser() user: any,
+    @Query('ceremonyId') ceremonyId?: string,
+  ) {
+    return this.service.stats(user, ceremonyId);
+  }
 }

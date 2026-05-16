@@ -1,58 +1,108 @@
 /* Wedding Access · Shell (sidebar + layout) */
 const { useState } = React;
 
-const NAV = [
-  { id: 'dashboard',   label: 'Tableau de bord', icon: '◈', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
-  { id: 'guests',      label: 'Invités',          icon: '◉', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR','AGENT_VIN_HONNEUR','AGENT_DINER'] },
-  { id: 'scanner',     label: 'Scanner QR',       icon: '⬡', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR','AGENT_VIN_HONNEUR','AGENT_DINER'] },
-  { id: 'invitations', label: 'Invitations PDF',  icon: '✉', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
-  { id: 'seating',     label: 'Plan de table',    icon: '⊞', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
-  { id: 'history',     label: 'Historique scans', icon: '◷', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
-  { id: 'users',       label: 'Utilisateurs',     icon: '◎', roles: ['SUPER_ADMIN'] },
+const NAV_ITEMS = [
+  /* ── Gestion ── */
+  { id: 'dashboard',   label: 'Tableau de bord',  icon: '◈', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
+  { id: 'guests',      label: 'Invités',           icon: '◉', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR','AGENT_VIN_HONNEUR','AGENT_DINER'] },
+  { id: 'invitations', label: 'Invitations PDF',   icon: '✉', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
+  { id: 'templates',   label: 'Templates',         icon: '◧', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
+  { id: 'seating',     label: 'Plan de table',     icon: '⊞', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR','AGENT_VIN_HONNEUR','AGENT_DINER'] },
+  /* ── Événement ── */
+  { id: 'scanner',     label: 'Scanner QR',        icon: '⬡', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR','AGENT_VIN_HONNEUR','AGENT_DINER'] },
+  { id: 'history',     label: 'Historique scans',  icon: '◷', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR','AGENT_VIN_HONNEUR','AGENT_DINER'] },
+  /* ── Administration ── */
+  { id: 'users',       label: 'Utilisateurs',      icon: '◎', roles: ['SUPER_ADMIN','ADMIN_VIN_HONNEUR'] },
+  { id: 'branding',    label: 'Identité visuelle', icon: '✦', roles: ['SUPER_ADMIN'] },
 ];
 
-function Shell({ user, branding, onLogout }) {
+const NAV_SECTIONS = {
+  dashboard:   'Gestion',
+  guests:      'Gestion',
+  invitations: 'Gestion',
+  templates:   'Gestion',
+  seating:     'Gestion',
+  scanner:     'Événement',
+  history:     'Événement',
+  users:       'Administration',
+  branding:    'Administration',
+};
+
+function Shell({ user, branding, onBrandingUpdate, onLogout }) {
   const [screen, setScreen] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const visibleNav = NAV.filter(n => n.roles.includes(user.role));
+  const visibleNav = NAV_ITEMS.filter(n => n.roles.includes(user.role));
+
+  /* Group nav items by section */
+  const sections = [];
+  let lastSection = null;
+  visibleNav.forEach(item => {
+    const sec = NAV_SECTIONS[item.id];
+    if (sec !== lastSection) { sections.push({ section: sec, items: [] }); lastSection = sec; }
+    sections[sections.length - 1].items.push(item);
+  });
+
+  const monogramUrl = branding?.monogramPath
+    ? WA.fileUrl(branding.monogramPath, 'branding')
+    : null;
+
+  const navigate = (id) => { setScreen(id); setSidebarOpen(false); };
 
   return (
     <div className="wa-layout">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.4)', zIndex:99 }}
+          style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', zIndex:99 }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <aside className={`wa-sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="wa-sidebar-logo">
-          <h1>{branding?.appName || 'Wedding Access'}</h1>
-          <p>4 Juillet 2026</p>
+          {monogramUrl ? (
+            <div className="wa-sidebar-monogram">
+              <img
+                src={monogramUrl}
+                alt="Monogramme"
+                style={{ maxWidth:'80px', maxHeight:'80px', objectFit:'contain' }}
+              />
+            </div>
+          ) : (
+            <WeddingMonogram size={70} />
+          )}
+          <h1 style={{ marginTop:'.5rem' }}>{branding?.appName || 'Wedding Access'}</h1>
+          <p style={{ fontFamily:'var(--wa-font-serif)', fontStyle:'italic' }}>4 Juillet 2026</p>
         </div>
 
         <nav className="wa-nav">
-          {visibleNav.map(item => (
-            <button
-              key={item.id}
-              className={`wa-nav-item${screen === item.id ? ' active' : ''}`}
-              onClick={() => { setScreen(item.id); setSidebarOpen(false); }}
-            >
-              <span style={{ fontSize:'16px', width:'20px', textAlign:'center' }}>{item.icon}</span>
-              {item.label}
-            </button>
+          {sections.map(({ section, items }) => (
+            <div key={section}>
+              <div className="wa-nav-section">{section}</div>
+              {items.map(item => (
+                <button
+                  key={item.id}
+                  className={`wa-nav-item${screen === item.id ? ' active' : ''}`}
+                  onClick={() => navigate(item.id)}
+                >
+                  <span style={{ fontSize:'15px', width:'18px', textAlign:'center', flexShrink:0 }}>{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
 
         <div className="wa-sidebar-footer">
           <div style={{ fontSize:'12px', color:'var(--wa-muted)', marginBottom:'.5rem', paddingLeft:'.25rem' }}>
-            {user.firstName} {user.lastName}
+            <span style={{ fontWeight:500, color:'var(--wa-charcoal)' }}>{user.firstName} {user.lastName}</span>
             <br />
-            <span style={{ fontSize:'10px', textTransform:'uppercase', letterSpacing:'.05em' }}>{user.role?.replace(/_/g, ' ')}</span>
+            <span style={{ fontSize:'10px', textTransform:'uppercase', letterSpacing:'.05em' }}>
+              {user.role?.replace(/_/g, ' ')}
+            </span>
           </div>
-          <button className="wa-btn wa-btn-ghost" style={{ width:'100%', justifyContent:'center' }} onClick={onLogout}>
+          <button className="wa-btn wa-btn-ghost" style={{ width:'100%', justifyContent:'center', fontSize:'12px' }} onClick={onLogout}>
             Déconnexion
           </button>
         </div>
@@ -62,8 +112,8 @@ function Shell({ user, branding, onLogout }) {
         <header className="wa-topbar">
           <button
             className="wa-btn wa-btn-ghost"
-            style={{ display:'none', padding:'.375rem' }}
             id="sidebar-toggle"
+            style={{ padding:'.375rem' }}
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             ☰
@@ -77,11 +127,13 @@ function Shell({ user, branding, onLogout }) {
         <div className="wa-page">
           {screen === 'dashboard'   && <DashboardScreen user={user} />}
           {screen === 'guests'      && <GuestsScreen user={user} />}
-          {screen === 'scanner'     && <ScannerScreen user={user} />}
           {screen === 'invitations' && <InvitationsScreen user={user} />}
+          {screen === 'templates'   && <TemplatesScreen user={user} />}
           {screen === 'seating'     && <SeatingScreen user={user} />}
+          {screen === 'scanner'     && <ScannerScreen user={user} />}
           {screen === 'history'     && <HistoryScreen user={user} />}
           {screen === 'users'       && <UsersScreen user={user} />}
+          {screen === 'branding'    && <BrandingScreen user={user} branding={branding} onUpdate={onBrandingUpdate} />}
         </div>
       </main>
     </div>
@@ -96,7 +148,7 @@ function ThemeToggle() {
     setTheme(next);
   };
   return (
-    <button className="wa-btn wa-btn-ghost" onClick={toggle} title="Changer de thème">
+    <button className="wa-btn wa-btn-ghost" onClick={toggle} title="Changer de thème" style={{ fontSize:'16px', padding:'.375rem .5rem' }}>
       {theme === 'day' ? '☽' : '☀'}
     </button>
   );

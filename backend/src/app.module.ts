@@ -10,6 +10,7 @@ import { TemplatesModule } from './templates/templates.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { ScansModule } from './scans/scans.module';
 import { SeatingPlansModule } from './seating-plans/seating-plans.module';
+import { SeatingModule } from './seating/seating.module';
 import { BrandingModule } from './branding/branding.module';
 import { StatsModule } from './stats/stats.module';
 import { FilesModule } from './files/files.module';
@@ -27,6 +28,7 @@ import { FilesModule } from './files/files.module';
     InvitationsModule,
     ScansModule,
     SeatingPlansModule,
+    SeatingModule,
     BrandingModule,
     StatsModule,
     FilesModule,

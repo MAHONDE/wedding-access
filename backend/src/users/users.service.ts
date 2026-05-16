@@ -6,8 +6,15 @@ import * as bcrypt from 'bcryptjs';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  list() {
+  list(caller?: any) {
+    /* ADMIN_VIN_HONNEUR only sees agents in their scope */
+    const where: any =
+      caller?.role === 'ADMIN_VIN_HONNEUR'
+        ? { ceremonyScope: 'VIN_HONNEUR', role: { in: ['AGENT_VIN_HONNEUR'] } }
+        : {};
+
     return this.prisma.user.findMany({
+      where,
       select: {
         id: true,
         email: true,

@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
+import { StatsGateway } from '../stats/stats.gateway';
 
 @Injectable()
 export class ScansService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private statsGateway: StatsGateway,
+  ) {}
 
   async verify(user: any, token: string, deviceInfo?: string) {
     const qrCode = await this.prisma.qRCode.findUnique({
@@ -123,6 +127,7 @@ export class ScansService {
     });
 
     await this.logScan(user, token, updatedGuest.id, updatedGuest.ceremonyId, 'VALID', deviceInfo);
+    this.statsGateway.broadcast(updatedGuest.ceremonyId).catch(() => {});
 
     return {
       valid: true,
@@ -167,6 +172,32 @@ export class ScansService {
         },
       });
     } catch {}
+  }
+
+  async stats(user: any, ceremonyId?: string) {
+    const where: any =
+      user.role === 'SUPER_ADMIN'
+        ? ceremonyId ? { ceremonyId } : {}
+        : ceremonyId
+          ? { ceremonyId }
+          : user.ceremonyScope
+            ? { ceremony: { type: user.ceremonyScope } }
+            : {};
+
+    const [valid, alreadyUsed, wrongCeremony, invalid] = await Promise.all([
+      this.prisma.scanLog.count({ where: { ...where, result: 'VALID' } }),
+      this.prisma.scanLog.count({ where: { ...where, result: 'ALREADY_USED' } }),
+      this.prisma.scanLog.count({ where: { ...where, result: 'WRONG_CEREMONY' } }),
+      this.prisma.scanLog.count({ where: { ...where, result: 'INVALID' } }),
+    ]);
+
+    return {
+      valid,
+      alreadyUsed,
+      wrongCeremony,
+      invalid,
+      total: valid + alreadyUsed + wrongCeremony + invalid,
+    };
   }
 
   async history(user: any, ceremonyId: string | undefined, page = 1) {

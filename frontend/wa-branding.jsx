@@ -1,20 +1,37 @@
 /* Wedding Access · Branding (decorative elements) */
 
-function WeddingMonogram({ coupleName = 'M & J', size = 120 }) {
+function WeddingMonogram({ logoUrl, size = 80 }) {
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt="Monogramme"
+        style={{
+          width: size,
+          height: size,
+          objectFit: 'contain',
+          display: 'block',
+          margin: '0 auto',
+        }}
+      />
+    );
+  }
+
+  /* Default SVG monogram */
   return (
-    <svg width={size} height={size} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="60" cy="60" r="58" fill="none" stroke="var(--wa-gold)" strokeWidth=".8" strokeDasharray="2,4" />
-      <circle cx="60" cy="60" r="50" fill="none" stroke="var(--wa-gold)" strokeWidth=".4" />
+    <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="none" stroke="var(--wa-gold)" strokeWidth=".8" strokeDasharray="2,4" />
+      <circle cx="50" cy="50" r="42" fill="none" stroke="var(--wa-gold)" strokeWidth=".4" />
       <text
-        x="60" y="67"
+        x="50" y="57"
         textAnchor="middle"
         fontFamily="Cormorant Garamond, Georgia, serif"
-        fontSize="28"
+        fontSize="22"
         fontWeight="300"
         fill="var(--wa-gold)"
-        letterSpacing="6"
+        letterSpacing="4"
       >
-        {coupleName}
+        M &amp; J
       </text>
     </svg>
   );
@@ -22,8 +39,6 @@ function WeddingMonogram({ coupleName = 'M & J', size = 120 }) {
 
 function FloralDivider() {
   return (
-    <div style={{ textAlign:'center', color:'var(--wa-gold-light)', fontSize:'18px', letterSpacing:'8px', margin:'1rem 0' }}>
-      ✦ ❧ ✦
-    </div>
+    <div className="wa-floral">✦ ❧ ✦</div>
   );
 }

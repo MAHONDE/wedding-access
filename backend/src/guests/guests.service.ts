@@ -176,4 +176,48 @@ export class GuestsService {
     await this.get(user, id);
     return this.prisma.guest.delete({ where: { id } });
   }
+
+  async import(user: any, ceremonyId: string, csv: string) {
+    if (!ceremonyId) throw new BadRequestException('ceremonyId est requis');
+    const ceremony = await this.prisma.ceremony.findUnique({ where: { id: ceremonyId } });
+    if (!ceremony) throw new NotFoundException('Cérémonie introuvable');
+    if (user.role !== 'SUPER_ADMIN' && user.ceremonyScope && user.ceremonyScope !== ceremony.type) {
+      throw new ForbiddenException('Accès non autorisé');
+    }
+
+    const lines = csv.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+    const results = { created: 0, skipped: 0, errors: [] as string[] };
+
+    for (const line of lines) {
+      const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
+      const primaryName = parts[0];
+      const companionName = parts[1] || null;
+      const email = parts[2] || null;
+      const phone = parts[3] || null;
+
+      if (!primaryName) { results.skipped++; continue; }
+
+      try {
+        const type = companionName ? 'COUPLE' : 'INDIVIDUAL';
+        await this.prisma.guest.create({
+          data: {
+            ceremonyId,
+            type,
+            primaryName,
+            companionName: companionName || null,
+            email: email || null,
+            phone: phone || null,
+            numberOfSeats: type === 'COUPLE' ? 2 : 1,
+            entryStatus: 'NOT_ARRIVED',
+          },
+        });
+        results.created++;
+      } catch {
+        results.errors.push(primaryName);
+        results.skipped++;
+      }
+    }
+
+    return results;
+  }
 }

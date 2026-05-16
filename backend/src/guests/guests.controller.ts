@@ -40,6 +40,15 @@ export class GuestsController {
     return this.service.get(user, id);
   }
 
+  @Post('import')
+  import(
+    @CurrentUser() user: any,
+    @Body('ceremonyId') ceremonyId: string,
+    @Body('csv') csv: string,
+  ) {
+    return this.service.import(user, ceremonyId, csv);
+  }
+
   @Post()
   create(@CurrentUser() user: any, @Body() dto: any) {
     return this.service.create(user, dto);

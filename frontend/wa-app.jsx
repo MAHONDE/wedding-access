@@ -6,10 +6,29 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [branding, setBranding] = useState(null);
 
+  /* Auto theme switch: jour avant 17h30, soir à partir de 17h30 */
+  useEffect(() => {
+    function applyThemeByTime() {
+      const now = new Date();
+      const minutes = now.getHours() * 60 + now.getMinutes();
+      const target = minutes >= 17 * 60 + 30 ? 'night' : 'day';
+      if (document.body.dataset.theme !== target) {
+        document.body.dataset.theme = target;
+      }
+    }
+    applyThemeByTime();
+    const interval = setInterval(applyThemeByTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const logout = useCallback(() => {
     WA.auth.logout();
     setUser(null);
     setBranding(null);
+  }, []);
+
+  const refreshBranding = useCallback(() => {
+    WA.branding.get().then(b => { if (b) setBranding(b); }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -34,15 +53,25 @@ function App() {
 
   if (!user) {
     return (
-      <LoginScreen onLogin={(me, token) => {
-        WA.auth.setToken(token);
-        setUser(me);
-        WA.branding.get().then(b => { if (b) setBranding(b); }).catch(() => {});
-      }} />
+      <LoginScreen
+        branding={branding}
+        onLogin={(me, token) => {
+          WA.auth.setToken(token);
+          setUser(me);
+          WA.branding.get().then(b => { if (b) setBranding(b); }).catch(() => {});
+        }}
+      />
     );
   }
 
-  return <Shell user={user} branding={branding} onLogout={logout} />;
+  return (
+    <Shell
+      user={user}
+      branding={branding}
+      onBrandingUpdate={refreshBranding}
+      onLogout={logout}
+    />
+  );
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);

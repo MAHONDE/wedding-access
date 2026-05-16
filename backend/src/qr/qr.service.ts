@@ -130,4 +130,38 @@ export class QrService {
     if (active) return active;
     return this.generate(user, guestId);
   }
+
+  async generateBulk(
+    user: any,
+    ceremonyId: string,
+  ): Promise<{ total: number; generated: number; skipped: number }> {
+    if (!ceremonyId) {
+      const { BadRequestException } = await import('@nestjs/common');
+      throw new BadRequestException('ceremonyId est requis');
+    }
+
+    const ceremony = await this.prisma.ceremony.findUnique({ where: { id: ceremonyId } });
+    if (!ceremony) {
+      const { NotFoundException } = await import('@nestjs/common');
+      throw new NotFoundException('Cérémonie introuvable');
+    }
+    this.assertUserScope(user, ceremony.type);
+
+    const guests = await this.prisma.guest.findMany({ where: { ceremonyId } });
+
+    let generated = 0;
+    let skipped = 0;
+
+    for (const guest of guests) {
+      const active = await this.getActive(guest.id);
+      if (active) {
+        skipped++;
+      } else {
+        await this.generate(user, guest.id);
+        generated++;
+      }
+    }
+
+    return { total: guests.length, generated, skipped };
+  }
 }
