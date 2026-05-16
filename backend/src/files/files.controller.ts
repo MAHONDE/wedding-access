@@ -4,10 +4,8 @@ import {
   NotFoundException,
   Param,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -36,7 +34,6 @@ function getMimeType(filename: string): string {
   return map[ext] || 'application/octet-stream';
 }
 
-@UseGuards(JwtAuthGuard)
 @Controller('files')
 export class FilesController {
   @Get(':type/:filename')
