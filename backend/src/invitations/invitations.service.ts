@@ -21,6 +21,41 @@ export class InvitationsService {
     }
   }
 
+  private sanitizeFileName(name: string): string {
+    return name
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 200);
+  }
+
+  private buildGuestFileName(guest: any): string {
+    let label = guest.primaryName;
+    if (guest.type === 'COUPLE' && guest.companionName) {
+      label = `${guest.primaryName} et ${guest.companionName}`;
+    }
+    return this.sanitizeFileName(label) + '.pdf';
+  }
+
+  private getUniqueFilePath(dir: string, baseFileName: string): { filePath: string; fileName: string } {
+    const ext = '.pdf';
+    const base = baseFileName.endsWith(ext) ? baseFileName.slice(0, -ext.length) : baseFileName;
+
+    let fileName = `${base}${ext}`;
+    if (!fs.existsSync(path.join(dir, fileName))) {
+      return { filePath: path.join(dir, fileName), fileName };
+    }
+
+    for (let i = 2; i <= 999; i++) {
+      fileName = `${base}-${i}${ext}`;
+      const filePath = path.join(dir, fileName);
+      if (!fs.existsSync(filePath)) return { filePath, fileName };
+    }
+
+    fileName = `${base}-${Date.now()}${ext}`;
+    return { filePath: path.join(dir, fileName), fileName };
+  }
+
   async generate(user: any, guestId: string) {
     const guest = await this.prisma.guest.findUnique({
       where: { id: guestId },
@@ -33,13 +68,11 @@ export class InvitationsService {
         table: true,
       },
     });
-    if (!guest) throw new NotFoundException('Invité introuvable');
+    if (!guest || guest.deletedAt) throw new NotFoundException('Invité introuvable');
     this.assertScope(user, guest.ceremony.type);
 
-    // Ensure active QR code exists
     const qrCode = await this.qr.ensureActiveForGuest(user, guestId);
 
-    // Mark old invitations as OBSOLETE
     await this.prisma.invitation.updateMany({
       where: { guestId, isObsolete: false },
       data: { isObsolete: true, status: 'OBSOLETE' },
@@ -49,20 +82,19 @@ export class InvitationsService {
     const dir = path.join(STORAGE, 'invitations');
     fs.mkdirSync(dir, { recursive: true });
 
-    let pdfPath: string;
-    let templateId: string | null = null;
+    let tmpPath: string;
 
     if (activeTemplate) {
-      pdfPath = await this.generateFromTemplate(guest, qrCode, activeTemplate, dir);
-      templateId = activeTemplate.id;
+      tmpPath = await this.generateFromTemplate(guest, qrCode, activeTemplate, dir);
     } else {
-      pdfPath = await this.generateDefault(guest, qrCode, dir);
+      tmpPath = await this.generateDefault(guest, qrCode, dir);
     }
 
-    const fileName = `invitation-${guestId}-${Date.now()}.pdf`;
-    const finalPath = path.join(dir, fileName);
-    if (pdfPath !== finalPath) {
-      fs.renameSync(pdfPath, finalPath);
+    const baseFileName = this.buildGuestFileName(guest);
+    const { filePath: finalPath, fileName } = this.getUniqueFilePath(dir, baseFileName);
+
+    if (tmpPath !== finalPath) {
+      fs.renameSync(tmpPath, finalPath);
     }
 
     const invitation = await this.prisma.invitation.create({
@@ -70,7 +102,7 @@ export class InvitationsService {
         guestId,
         ceremonyId: guest.ceremonyId,
         qrCodeId: qrCode.id,
-        templateId,
+        templateId: activeTemplate?.id ?? null,
         pdfPath: finalPath,
         fileName,
         status: 'GENERATED',
@@ -87,7 +119,7 @@ export class InvitationsService {
 
   private async generateDefault(guest: any, qrCode: any, dir: string): Promise<string> {
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([420, 595]); // A5
+    const page = pdfDoc.addPage([420, 595]);
     const fontSerif = await pdfDoc.embedFont(StandardFonts.TimesRoman);
     const fontSans = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
@@ -96,9 +128,7 @@ export class InvitationsService {
     const dark = rgb(0.173, 0.173, 0.173);
     const muted = rgb(0.42, 0.396, 0.376);
 
-    // Background
     page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(0.98, 0.973, 0.957) });
-    // Border
     page.drawRectangle({ x: 12, y: 12, width: width - 24, height: height - 24, borderColor: gold, borderWidth: 0.8 });
     page.drawRectangle({ x: 18, y: 18, width: width - 36, height: height - 36, borderColor: gold, borderWidth: 0.3 });
 
@@ -129,10 +159,7 @@ export class InvitationsService {
 
     const ceremDate = guest.ceremony.date
       ? new Date(guest.ceremony.date).toLocaleDateString('fr-FR', {
-          weekday: 'long',
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         })
       : '';
     if (ceremDate) {
@@ -151,7 +178,6 @@ export class InvitationsService {
       page.drawText(tableText, { x: (width - tableW) / 2, y: height - 315, size: 13, font: fontSerif, color: gold });
     }
 
-    // QR Code
     const qrSize = 100;
     const qrX = (width - qrSize) / 2;
     const qrY = 70;
@@ -198,13 +224,14 @@ export class InvitationsService {
       fs.writeFileSync(tmpPath, bytes);
       return tmpPath;
     } catch {
-      // Fallback to default if template processing fails
       return this.generateDefault(guest, qrCode, dir);
     }
   }
 
   async generateBulk(user: any, ceremonyId: string) {
-    const guests = await this.prisma.guest.findMany({ where: { ceremonyId } });
+    const guests = await this.prisma.guest.findMany({
+      where: { ceremonyId, deletedAt: null },
+    });
     const results = await Promise.allSettled(
       guests.map((g) => this.generate(user, g.id)),
     );
@@ -238,7 +265,7 @@ export class InvitationsService {
   }
 
   async updateStatus(user: any, id: string, status: string) {
-    const invitation = await this.getById(user, id);
+    await this.getById(user, id);
     return this.prisma.invitation.update({
       where: { id },
       data: { status: status as any },
@@ -250,10 +277,9 @@ export class InvitationsService {
       where: { id: guestId },
       include: { ceremony: true },
     });
-    if (!guest) throw new NotFoundException('Invité introuvable');
+    if (!guest || guest.deletedAt) throw new NotFoundException('Invité introuvable');
     this.assertScope(user, guest.ceremony.type);
 
-    // Disable active QR codes
     const activeQr = await this.prisma.qRCode.findFirst({
       where: { guestId, isActive: true },
     });
@@ -261,7 +287,6 @@ export class InvitationsService {
       await this.qr.regenerate(user, activeQr.id);
     }
 
-    // Mark existing invitations obsolete (done inside generate())
     return this.generate(user, guestId);
   }
 }

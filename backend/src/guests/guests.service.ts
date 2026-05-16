@@ -11,7 +11,7 @@ export class GuestsService {
   constructor(private prisma: PrismaService) {}
 
   private scopeWhere(user: any, ceremonyId?: string): any {
-    const base: any = {};
+    const base: any = { deletedAt: null };
     if (ceremonyId) {
       base.ceremonyId = ceremonyId;
     } else if (user.role !== 'SUPER_ADMIN' && user.ceremonyScope) {
@@ -25,6 +25,17 @@ export class GuestsService {
     if (user.ceremonyScope !== guest.ceremony.type) {
       throw new ForbiddenException('Accès à cet invité non autorisé');
     }
+  }
+
+  private assertCanDelete(user: any, ceremonyType: string) {
+    if (user.role === 'SUPER_ADMIN') return;
+    if (user.role === 'ADMIN_VIN_HONNEUR') {
+      if (ceremonyType !== 'VIN_HONNEUR') {
+        throw new ForbiddenException('Vous ne pouvez supprimer que les invités Vin d\'honneur');
+      }
+      return;
+    }
+    throw new ForbiddenException('Suppression non autorisée');
   }
 
   async list(user: any, ceremonyId?: string, q?: string) {
@@ -84,7 +95,7 @@ export class GuestsService {
         table: { select: { id: true, name: true } },
       },
     });
-    if (!guest) throw new NotFoundException('Invité introuvable');
+    if (!guest || guest.deletedAt) throw new NotFoundException('Invité introuvable');
     this.assertScope(user, guest);
     return guest;
   }
@@ -95,16 +106,11 @@ export class GuestsService {
     if (!ceremonyId) throw new BadRequestException('ceremonyId est requis');
     if (!primaryName) throw new BadRequestException('primaryName est requis');
 
-    // Check scope: non-super-admin can only create for their ceremony
     if (user.role !== 'SUPER_ADMIN') {
-      const ceremony = await this.prisma.ceremony.findUnique({
-        where: { id: ceremonyId },
-      });
+      const ceremony = await this.prisma.ceremony.findUnique({ where: { id: ceremonyId } });
       if (!ceremony) throw new NotFoundException('Cérémonie introuvable');
       if (user.ceremonyScope && user.ceremonyScope !== ceremony.type) {
-        throw new ForbiddenException(
-          'Vous ne pouvez créer des invités que pour votre cérémonie',
-        );
+        throw new ForbiddenException('Vous ne pouvez créer des invités que pour votre cérémonie');
       }
     }
 
@@ -113,9 +119,7 @@ export class GuestsService {
 
     if (guestType === 'COUPLE') {
       if (!companionName) {
-        throw new BadRequestException(
-          'companionName est requis pour un invité de type COUPLE',
-        );
+        throw new BadRequestException('companionName est requis pour un invité de type COUPLE');
       }
       numberOfSeats = 2;
     }
@@ -173,8 +177,28 @@ export class GuestsService {
   }
 
   async delete(user: any, id: string) {
-    await this.get(user, id);
-    return this.prisma.guest.delete({ where: { id } });
+    const guest = await this.get(user, id);
+    this.assertCanDelete(user, guest.ceremony.type);
+
+    // Soft delete
+    await this.prisma.guest.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    // Deactivate QR codes so the guest can't be scanned
+    await this.prisma.qRCode.updateMany({
+      where: { guestId: id, isActive: true },
+      data: { isActive: false },
+    });
+
+    // Mark invitations obsolete
+    await this.prisma.invitation.updateMany({
+      where: { guestId: id, isObsolete: false },
+      data: { isObsolete: true, status: 'OBSOLETE' },
+    });
+
+    return { success: true, id };
   }
 
   async import(user: any, ceremonyId: string, csv: string) {

@@ -57,9 +57,10 @@ export class InvitationsController {
   ) {
     const filePath = await this.service.download(user, id);
     const fileName = path.basename(filePath);
+    const encoded = encodeURIComponent(fileName);
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encoded}`,
     });
     fs.createReadStream(filePath).pipe(res);
   }

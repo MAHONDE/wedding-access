@@ -31,7 +31,7 @@ export class ScansService {
       };
     }
 
-    if (!qrCode.isActive) {
+    if (!qrCode.isActive || qrCode.guest.deletedAt) {
       await this.logScan(user, token, qrCode.guest.id, qrCode.guest.ceremonyId, 'INVALID', deviceInfo);
       return {
         valid: false,
@@ -89,7 +89,7 @@ export class ScansService {
       return { valid: false, result: 'INVALID', message: 'QR code introuvable ou invalide' };
     }
 
-    if (!qrCode.isActive) {
+    if (!qrCode.isActive || qrCode.guest.deletedAt) {
       await this.logScan(user, token, qrCode.guest.id, qrCode.guest.ceremonyId, 'INVALID', deviceInfo);
       return { valid: false, result: 'INVALID', message: 'QR code désactivé' };
     }

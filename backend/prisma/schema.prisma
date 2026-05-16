@@ -115,6 +115,7 @@ model Guest {
   scanLogs      ScanLog[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?
 }
 
 model QRCode {

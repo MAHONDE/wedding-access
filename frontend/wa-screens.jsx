@@ -1,28 +1,68 @@
 /* Wedding Access · Screens v3 */
 const { useState, useEffect, useRef, useCallback } = React;
 
+/* ─── Ceremony cache (shared across screen mounts) ─────────── */
+let _cerCache = null;
+let _cerCacheAt = 0;
+const CER_TTL = 120000;
+
 /* ─── Helpers ──────────────────────────────────────────────── */
 function cereomonyLabel(type) {
   return type === 'VIN_HONNEUR' ? 'Vin d\'honneur' : 'Dîner';
 }
 
 function useCeremonies(user) {
-  const [ceremonies, setCeremonies] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [ceremonies, setCeremonies] = useState(_cerCache || []);
+  const [loading, setLoading] = useState(!_cerCache);
 
   useEffect(() => {
+    if (_cerCache && Date.now() - _cerCacheAt < CER_TTL) {
+      setCeremonies(_cerCache);
+      setLoading(false);
+      return;
+    }
     WA.ceremonies.list()
-      .then(cs => setCeremonies(cs))
+      .then(cs => { _cerCache = cs; _cerCacheAt = Date.now(); setCeremonies(cs); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  /* For non-SUPER_ADMIN, filter to their scope */
   const scoped = user.role === 'SUPER_ADMIN'
     ? ceremonies
     : ceremonies.filter(c => c.type === user.ceremonyScope);
 
   return { ceremonies: scoped, loading };
+}
+
+/* ─── ConfirmDeleteModal ────────────────────────────────────── */
+function ConfirmDeleteModal({ guest, onConfirm, onCancel, loading }) {
+  return (
+    <div className="wa-modal-overlay" onClick={onCancel}>
+      <div className="wa-modal" onClick={e => e.stopPropagation()}>
+        <h3 style={{ marginBottom:'.75rem', color:'var(--wa-charcoal)' }}>Supprimer l'invité</h3>
+        <p style={{ color:'var(--wa-muted)', fontSize:'14px', marginBottom:'.5rem' }}>
+          Êtes-vous sûr de vouloir supprimer{' '}
+          <strong style={{ color:'var(--wa-charcoal)' }}>
+            {guest.primaryName}{guest.companionName ? ` & ${guest.companionName}` : ''}
+          </strong> ?
+        </p>
+        <p style={{ color:'var(--wa-muted)', fontSize:'12px', marginBottom:'1.25rem' }}>
+          Son QR code sera désactivé et ses invitations marquées obsolètes.
+        </p>
+        <div className="wa-flex wa-gap-sm" style={{ justifyContent:'flex-end' }}>
+          <button className="wa-btn wa-btn-ghost" onClick={onCancel} disabled={loading}>Annuler</button>
+          <button
+            className="wa-btn"
+            style={{ background:'var(--wa-error)', color:'#fff', border:'none' }}
+            onClick={onConfirm}
+            disabled={loading}
+          >
+            {loading ? 'Suppression…' : 'Supprimer'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* ─── StatCard ──────────────────────────────────────────────── */
@@ -199,12 +239,16 @@ function DashboardScreen({ user }) {
 function GuestsScreen({ user }) {
   const { ceremonies } = useCeremonies(user);
   const [ceremonyId, setCeremonyId] = useState('');
-  const [guests, setGuests]   = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch]   = useState('');
-  const [showAdd, setShowAdd] = useState(false);
-  const [stats, setStats]     = useState(null);
+  const [guests, setGuests]       = useState([]);
+  const [loading, setLoading]     = useState(false);
+  const [search, setSearch]       = useState('');
+  const [showAdd, setShowAdd]     = useState(false);
+  const [stats, setStats]         = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting]   = useState(false);
   const debounceRef = useRef(null);
+
+  const canDelete = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN_VIN_HONNEUR';
 
   useEffect(() => {
     if (ceremonies.length > 0 && !ceremonyId) setCeremonyId(ceremonies[0].id);
@@ -229,6 +273,21 @@ function GuestsScreen({ user }) {
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => load(v), 300);
   };
+
+  async function handleDelete() {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    try {
+      await WA.guests.delete(confirmDelete.id);
+      setGuests(prev => prev.filter(g => g.id !== confirmDelete.id));
+      setConfirmDelete(null);
+      WA.guests.stats(ceremonyId).then(setStats).catch(() => {});
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const statusBadge = (s) => {
     if (s === 'ARRIVED') return <span className="wa-badge wa-badge-success">Arrivé</span>;
@@ -266,6 +325,15 @@ function GuestsScreen({ user }) {
           <button className="wa-btn wa-btn-primary" onClick={() => setShowAdd(true)}>+ Ajouter</button>
         </div>
       </div>
+
+      {confirmDelete && (
+        <ConfirmDeleteModal
+          guest={confirmDelete}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(null)}
+          loading={deleting}
+        />
+      )}
 
       {showAdd && (
         <AddGuestForm
@@ -324,6 +392,14 @@ function GuestsScreen({ user }) {
                           title="WhatsApp"
                         >WA</a>
                       )}
+                      {canDelete && (
+                        <button
+                          className="wa-btn wa-btn-ghost"
+                          style={{ fontSize:'11px', padding:'.2rem .45rem', color:'var(--wa-error)' }}
+                          title="Supprimer"
+                          onClick={() => setConfirmDelete(g)}
+                        >✕</button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -350,7 +426,7 @@ function GuestsScreen({ user }) {
               {typeBadge(g.type)}
               {g.table && <span className="wa-badge wa-badge-info">Table {g.table.name}</span>}
             </div>
-            <div className="wa-flex wa-gap-xs">
+            <div className="wa-flex wa-gap-xs" style={{ flexWrap:'wrap' }}>
               <button className="wa-btn wa-btn-secondary" style={{ fontSize:'12px', padding:'.3rem .6rem' }}
                 onClick={() => WA.qr.generate(g.id).then(() => load()).catch(e => alert(e.message))}>QR</button>
               <button className="wa-btn wa-btn-primary" style={{ fontSize:'12px', padding:'.3rem .6rem' }}
@@ -361,6 +437,15 @@ function GuestsScreen({ user }) {
                   className="wa-btn wa-btn-whatsapp" style={{ fontSize:'12px', padding:'.3rem .6rem' }}>
                   WhatsApp
                 </a>
+              )}
+              {canDelete && (
+                <button
+                  className="wa-btn wa-btn-ghost"
+                  style={{ fontSize:'12px', padding:'.3rem .6rem', color:'var(--wa-error)' }}
+                  onClick={() => setConfirmDelete(g)}
+                >
+                  Supprimer
+                </button>
               )}
             </div>
           </div>
