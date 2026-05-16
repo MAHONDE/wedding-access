@@ -23,7 +23,7 @@ function App() {
     WA.auth.me()
       .then(me => {
         setUser(me);
-        return WA.branding.get(me.ceremonyId || 'default').catch(() => null);
+        return WA.branding.get().catch(() => null);
       })
       .then(b => { if (b) setBranding(b); })
       .catch(() => WA.auth.logout())
@@ -37,7 +37,7 @@ function App() {
       <LoginScreen onLogin={(me, token) => {
         WA.auth.setToken(token);
         setUser(me);
-        WA.branding.get(me.ceremonyId || 'default').then(b => { if (b) setBranding(b); }).catch(() => {});
+        WA.branding.get().then(b => { if (b) setBranding(b); }).catch(() => {});
       }} />
     );
   }

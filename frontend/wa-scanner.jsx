@@ -163,8 +163,9 @@ function ScannerScreen({ user }) {
               <h3>Invité identifié</h3>
               {result.guest && (
                 <p>
-                  <strong>{result.guest.firstName} {result.guest.lastName}</strong><br />
-                  {result.guest.tableNumber && `Table ${result.guest.tableNumber}`}<br />
+                  <strong>{result.guest.primaryName}</strong>
+                  {result.guest.companionName && <> & {result.guest.companionName}</>}<br />
+                  {result.guest.table && `Table ${result.guest.table.name}`}<br />
                   Statut actuel : {result.guest.entryStatus}
                 </p>
               )}
@@ -179,7 +180,7 @@ function ScannerScreen({ user }) {
           {step === 'done' && (
             <>
               <h3>Entrée validée !</h3>
-              {result.guest && <p><strong>{result.guest.firstName} {result.guest.lastName}</strong> — bienvenue !</p>}
+              {result.guest && <p><strong>{result.guest.primaryName}</strong> — bienvenue !</p>}
               <button className="wa-btn wa-btn-ghost" style={{ marginTop:'.75rem' }} onClick={reset}>
                 Scanner suivant
               </button>

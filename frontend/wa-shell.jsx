@@ -29,8 +29,8 @@ function Shell({ user, branding, onLogout }) {
 
       <aside className={`wa-sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="wa-sidebar-logo">
-          <h1>{branding?.coupleName || 'Wedding Access'}</h1>
-          <p>{branding?.eventDate ? new Date(branding.eventDate).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '4 Juillet 2026'}</p>
+          <h1>{branding?.appName || 'Wedding Access'}</h1>
+          <p>4 Juillet 2026</p>
         </div>
 
         <nav className="wa-nav">

@@ -72,16 +72,16 @@ function DashboardScreen({ user }) {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    WA.guests.stats(user.ceremonyId || '').then(setStats).catch(() => {});
+    WA.guests.stats().then(setStats).catch(() => {});
   }, []);
 
   return (
     <div>
       <div className="wa-stat-grid">
-        <StatCard value={stats?.total ?? '—'}    label="Total invités" />
-        <StatCard value={stats?.arrived ?? '—'}  label="Arrivés" color="var(--wa-success)" />
-        <StatCard value={stats?.pending ?? '—'}  label="En attente" />
-        <StatCard value={stats?.absent ?? '—'}   label="Absents" color="var(--wa-error)" />
+        <StatCard value={stats?.total ?? '—'}       label="Total invités" />
+        <StatCard value={stats?.totalSeats ?? '—'}  label="Places totales" />
+        <StatCard value={stats?.arrived ?? '—'}     label="Arrivés" color="var(--wa-success)" />
+        <StatCard value={stats?.notArrived ?? '—'}  label="Non arrivés" />
       </div>
       <div className="wa-card">
         <div className="wa-card-title">Bienvenue, {user.firstName}</div>
@@ -108,16 +108,23 @@ function GuestsScreen({ user }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [ceremonyId, setCeremonyId] = useState('');
+
+  useEffect(() => {
+    WA.ceremonies.list()
+      .then(cs => { if (cs.length > 0) setCeremonyId(cs[0].id); })
+      .catch(() => {});
+  }, []);
 
   const load = (q) => {
     setLoading(true);
-    WA.guests.list(user.ceremonyId || '', q)
+    WA.guests.list(ceremonyId, q)
       .then(setGuests)
       .catch(() => {})
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(''); }, []);
+  useEffect(() => { load(''); }, [ceremonyId]);
 
   const debounceRef = useRef(null);
   const handleSearch = (v) => {
@@ -127,8 +134,8 @@ function GuestsScreen({ user }) {
   };
 
   const statusBadge = (s) => {
-    const map = { INVITED:'info', CONFIRMED:'success', ARRIVED:'success', ABSENT:'error', PENDING:'muted' };
-    const labels = { INVITED:'Invité', CONFIRMED:'Confirmé', ARRIVED:'Arrivé', ABSENT:'Absent', PENDING:'En attente' };
+    const map = { ARRIVED:'success', NOT_ARRIVED:'muted' };
+    const labels = { ARRIVED:'Arrivé', NOT_ARRIVED:'Non arrivé' };
     return <span className={`wa-badge wa-badge-${map[s]||'muted'}`}>{labels[s]||s}</span>;
   };
 
@@ -149,7 +156,7 @@ function GuestsScreen({ user }) {
 
       {showAdd && (
         <AddGuestForm
-          ceremonyId={user.ceremonyId}
+          ceremonyId={ceremonyId}
           onClose={() => setShowAdd(false)}
           onSaved={() => { setShowAdd(false); load(search); }}
         />
@@ -160,33 +167,27 @@ function GuestsScreen({ user }) {
           <table className="wa-table">
             <thead>
               <tr>
-                <th>Nom</th>
-                <th>Prénom</th>
+                <th>Invité</th>
                 <th>Table</th>
                 <th>Statut</th>
-                <th>QR</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan="6" style={{ textAlign:'center', color:'var(--wa-muted)', padding:'2rem' }}>Chargement…</td></tr>
+                <tr><td colSpan="4" style={{ textAlign:'center', color:'var(--wa-muted)', padding:'2rem' }}>Chargement…</td></tr>
               )}
               {!loading && guests.length === 0 && (
-                <tr><td colSpan="6" style={{ textAlign:'center', color:'var(--wa-muted)', padding:'2rem' }}>Aucun invité trouvé</td></tr>
+                <tr><td colSpan="4" style={{ textAlign:'center', color:'var(--wa-muted)', padding:'2rem' }}>Aucun invité trouvé</td></tr>
               )}
               {guests.map(g => (
                 <tr key={g.id}>
-                  <td style={{ fontWeight:500 }}>{g.lastName}</td>
-                  <td>{g.firstName}</td>
-                  <td>{g.tableNumber || <span className="wa-text-muted">—</span>}</td>
-                  <td>{statusBadge(g.entryStatus)}</td>
-                  <td>
-                    {g.qrCode
-                      ? <span className="wa-badge wa-badge-success">✓ Généré</span>
-                      : <span className="wa-badge wa-badge-muted">Non généré</span>
-                    }
+                  <td style={{ fontWeight:500 }}>
+                    {g.primaryName}
+                    {g.companionName && <span style={{ color:'var(--wa-muted)', fontWeight:400 }}> & {g.companionName}</span>}
                   </td>
+                  <td>{g.table?.name || <span className="wa-text-muted">—</span>}</td>
+                  <td>{statusBadge(g.entryStatus)}</td>
                   <td>
                     <button
                       className="wa-btn wa-btn-ghost"
@@ -198,7 +199,7 @@ function GuestsScreen({ user }) {
                     <button
                       className="wa-btn wa-btn-ghost"
                       style={{ fontSize:'12px', padding:'.25rem .5rem', marginLeft:'.25rem' }}
-                      onClick={() => window.open(WA.invitations.download(g.id), '_blank')}
+                      onClick={() => WA.invitations.generateAndDownload(g.id).catch(e => alert(e.message))}
                     >
                       PDF
                     </button>
@@ -214,7 +215,7 @@ function GuestsScreen({ user }) {
 }
 
 function AddGuestForm({ ceremonyId, onClose, onSaved }) {
-  const [form, setForm] = useState({ firstName:'', lastName:'', email:'', phone:'', tableNumber:'' });
+  const [form, setForm] = useState({ primaryName:'', type:'INDIVIDUAL', companionName:'', email:'', phone:'' });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
 
@@ -224,7 +225,9 @@ function AddGuestForm({ ceremonyId, onClose, onSaved }) {
     e.preventDefault();
     setSaving(true); setErr('');
     try {
-      await WA.guests.create({ ...form, ceremonyId });
+      const payload = { primaryName: form.primaryName, type: form.type, email: form.email || null, phone: form.phone || null, ceremonyId };
+      if (form.type === 'COUPLE') payload.companionName = form.companionName;
+      await WA.guests.create(payload);
       onSaved();
     } catch (e) {
       setErr(e.message);
@@ -238,14 +241,23 @@ function AddGuestForm({ ceremonyId, onClose, onSaved }) {
       <div className="wa-card-title">Ajouter un invité</div>
       <form onSubmit={submit}>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'.75rem', marginTop:'1rem' }}>
-          <div className="wa-form-group" style={{ margin:0 }}>
-            <label className="wa-form-label">Prénom *</label>
-            <input className="wa-input" value={form.firstName} onChange={e => set('firstName', e.target.value)} required />
+          <div className="wa-form-group" style={{ margin:0, gridColumn:'1/-1' }}>
+            <label className="wa-form-label">Nom complet *</label>
+            <input className="wa-input" value={form.primaryName} onChange={e => set('primaryName', e.target.value)} required placeholder="Prénom Nom" />
           </div>
           <div className="wa-form-group" style={{ margin:0 }}>
-            <label className="wa-form-label">Nom *</label>
-            <input className="wa-input" value={form.lastName} onChange={e => set('lastName', e.target.value)} required />
+            <label className="wa-form-label">Type</label>
+            <select className="wa-input" value={form.type} onChange={e => set('type', e.target.value)}>
+              <option value="INDIVIDUAL">Individuel</option>
+              <option value="COUPLE">Couple</option>
+            </select>
           </div>
+          {form.type === 'COUPLE' && (
+            <div className="wa-form-group" style={{ margin:0 }}>
+              <label className="wa-form-label">Nom du/de la partenaire *</label>
+              <input className="wa-input" value={form.companionName} onChange={e => set('companionName', e.target.value)} required={form.type === 'COUPLE'} placeholder="Prénom Nom" />
+            </div>
+          )}
           <div className="wa-form-group" style={{ margin:0 }}>
             <label className="wa-form-label">E-mail</label>
             <input className="wa-input" type="email" value={form.email} onChange={e => set('email', e.target.value)} />
@@ -253,10 +265,6 @@ function AddGuestForm({ ceremonyId, onClose, onSaved }) {
           <div className="wa-form-group" style={{ margin:0 }}>
             <label className="wa-form-label">Téléphone</label>
             <input className="wa-input" value={form.phone} onChange={e => set('phone', e.target.value)} />
-          </div>
-          <div className="wa-form-group" style={{ margin:0 }}>
-            <label className="wa-form-label">N° de table</label>
-            <input className="wa-input" value={form.tableNumber} onChange={e => set('tableNumber', e.target.value)} />
           </div>
         </div>
         {err && <div className="wa-form-error" style={{ marginTop:'.5rem' }}>{err}</div>}
@@ -302,7 +310,7 @@ function HistoryScreen({ user }) {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    WA.scan.history(user.ceremonyId || '', page)
+    WA.scan.history('', page)
       .then(r => setScans(r.data || r))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -327,9 +335,9 @@ function HistoryScreen({ user }) {
               {scans.map((s, i) => (
                 <tr key={i}>
                   <td style={{ whiteSpace:'nowrap' }}>{new Date(s.scannedAt).toLocaleString('fr-FR')}</td>
-                  <td>{s.guest ? `${s.guest.firstName} ${s.guest.lastName}` : '—'}</td>
+                  <td>{s.guest?.primaryName || '—'}</td>
                   <td>
-                    <span className={`wa-badge wa-badge-${s.result === 'OK' ? 'success' : 'error'}`}>
+                    <span className={`wa-badge wa-badge-${s.result === 'VALID' ? 'success' : 'error'}`}>
                       {s.result}
                     </span>
                   </td>

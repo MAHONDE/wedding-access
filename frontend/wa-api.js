@@ -38,6 +38,27 @@
   const del  = (p)    => req('DELETE', p);
   const patch = (p, b) => req('PATCH', p, b);
 
+  async function downloadBlob(path, filename) {
+    const headers = {};
+    if (_token) headers['Authorization'] = 'Bearer ' + _token;
+    const res = await fetch(cfg().apiBase + path, { headers });
+    if (res.status === 401) {
+      setToken(null);
+      global.dispatchEvent(new Event('wa:auth-expired'));
+      throw new Error('Session expirée');
+    }
+    if (!res.ok) throw new Error('Téléchargement échoué');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || 'download.pdf';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   global.WA = {
     /* Auth */
     auth: {
@@ -50,8 +71,8 @@
 
     /* Branding */
     branding: {
-      get:    (cId) => get(`/branding/${cId}`),
-      update: (cId, data) => put(`/branding/${cId}`, data),
+      get:    ()       => get('/branding'),
+      update: (data)   => patch('/branding', data),
     },
 
     /* Ceremonies */
@@ -70,7 +91,7 @@
       update: (id, d) => put(`/guests/${id}`, d),
       delete: (id)  => del(`/guests/${id}`),
       import: (cId, csv) => post(`/guests/import`, { ceremonyId: cId, csv }),
-      stats:  (cId) => get(`/guests/stats?ceremonyId=${cId}`),
+      stats:  (cId) => get(`/guests/stats${cId ? '?ceremonyId='+cId : ''}`),
     },
 
     /* QR codes */
@@ -82,7 +103,10 @@
     /* Invitations */
     invitations: {
       generate: (guestId) => post(`/invitations/${guestId}`),
-      download: (guestId) => `${cfg().apiBase}/invitations/${guestId}/pdf`,
+      generateAndDownload: async (guestId) => {
+        const inv = await post(`/invitations/${guestId}`);
+        await downloadBlob(`/invitations/${inv.id}/download`, inv.fileName || `invitation-${guestId}.pdf`);
+      },
     },
 
     /* Seating */
