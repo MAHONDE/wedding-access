@@ -103,9 +103,7 @@ function LoginScreen({ branding, onLogin }) {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
 
-  const monogramUrl = branding?.monogramPath
-    ? WA.fileUrl(branding.monogramPath, 'branding')
-    : null;
+  const monogramUrl = branding?.monogramUrl || null;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -224,10 +222,10 @@ function DashboardScreen({ user, branding }) {
       )}
 
       <div className="wa-card">
-        {branding?.monogramPath && (
+        {branding?.monogramUrl && (
           <div className="wa-monogram-hero">
             <img
-              src={WA.fileUrl(branding.monogramPath, 'branding')}
+              src={branding.monogramUrl}
               alt=""
               className="wa-monogram-hero-img"
             />
@@ -862,8 +860,8 @@ function BrandingScreen({ user, branding, onUpdate }) {
     try { await WA.branding.deleteLogo(); refresh(); } catch (e) { alert(e.message); }
   }
 
-  const monogramUrl = localBranding?.monogramPath ? WA.fileUrl(localBranding.monogramPath, 'branding') : null;
-  const logoUrl     = localBranding?.primaryLogoPath ? WA.fileUrl(localBranding.primaryLogoPath, 'branding') : null;
+  const monogramUrl = localBranding?.monogramUrl || null;
+  const logoUrl     = localBranding?.logoUrl || null;
 
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1.5rem' }}>

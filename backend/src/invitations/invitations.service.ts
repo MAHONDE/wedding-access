@@ -79,7 +79,12 @@ export class InvitationsService {
     });
 
     const branding = await this.prisma.appBranding.findFirst();
-    const monogramPath = branding?.monogramPath || null;
+    let monogramBuffer: Buffer | null = null;
+    if (branding?.monogramPath && fs.existsSync(branding.monogramPath)) {
+      monogramBuffer = fs.readFileSync(branding.monogramPath);
+    } else if (branding?.monogramData) {
+      monogramBuffer = Buffer.from(branding.monogramData, 'base64');
+    }
 
     const activeTemplate = guest.ceremony.templates[0] || null;
     const dir = path.join(STORAGE, 'invitations');
@@ -88,9 +93,9 @@ export class InvitationsService {
     let tmpPath: string;
 
     if (activeTemplate) {
-      tmpPath = await this.generateFromTemplate(guest, qrCode, activeTemplate, dir, monogramPath);
+      tmpPath = await this.generateFromTemplate(guest, qrCode, activeTemplate, dir, monogramBuffer);
     } else {
-      tmpPath = await this.generateDefault(guest, qrCode, dir, monogramPath);
+      tmpPath = await this.generateDefault(guest, qrCode, dir, monogramBuffer);
     }
 
     const baseFileName = this.buildGuestFileName(guest);
@@ -120,7 +125,7 @@ export class InvitationsService {
     return invitation;
   }
 
-  private async generateDefault(guest: any, qrCode: any, dir: string, monogramPath?: string | null): Promise<string> {
+  private async generateDefault(guest: any, qrCode: any, dir: string, monogramBuffer?: Buffer | null): Promise<string> {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([420, 595]);
     const fontSerif = await pdfDoc.embedFont(StandardFonts.TimesRoman);
@@ -137,12 +142,11 @@ export class InvitationsService {
 
     // Embed couple monogram at top center
     let yShift = 0;
-    if (monogramPath && fs.existsSync(monogramPath)) {
+    if (monogramBuffer) {
       try {
-        const imgBytes = fs.readFileSync(monogramPath);
         let monoImg;
-        try { monoImg = await pdfDoc.embedPng(imgBytes); }
-        catch { monoImg = await pdfDoc.embedJpg(imgBytes); }
+        try { monoImg = await pdfDoc.embedPng(monogramBuffer); }
+        catch { monoImg = await pdfDoc.embedJpg(monogramBuffer); }
         const MONO_W = 80;
         const MONO_H = Math.round(MONO_W * monoImg.height / monoImg.width);
         page.drawImage(monoImg, { x: (width - MONO_W) / 2, y: height - MONO_H - 20, width: MONO_W, height: MONO_H });
@@ -222,7 +226,7 @@ export class InvitationsService {
     qrCode: any,
     template: any,
     dir: string,
-    monogramPath?: string | null,
+    monogramBuffer?: Buffer | null,
   ): Promise<string> {
     try {
       const templateBytes = fs.readFileSync(template.filePath);
@@ -232,12 +236,11 @@ export class InvitationsService {
       const { width, height } = page.getSize();
 
       // Add monogram in upper-right corner if available
-      if (monogramPath && fs.existsSync(monogramPath)) {
+      if (monogramBuffer) {
         try {
-          const imgBytes = fs.readFileSync(monogramPath);
           let monoImg;
-          try { monoImg = await pdfDoc.embedPng(imgBytes); }
-          catch { monoImg = await pdfDoc.embedJpg(imgBytes); }
+          try { monoImg = await pdfDoc.embedPng(monogramBuffer); }
+          catch { monoImg = await pdfDoc.embedJpg(monogramBuffer); }
           const MONO_W = 60;
           const MONO_H = Math.round(MONO_W * monoImg.height / monoImg.width);
           page.drawImage(monoImg, { x: width - MONO_W - 14, y: height - MONO_H - 14, width: MONO_W, height: MONO_H });
@@ -256,7 +259,7 @@ export class InvitationsService {
       fs.writeFileSync(tmpPath, bytes);
       return tmpPath;
     } catch {
-      return this.generateDefault(guest, qrCode, dir, monogramPath);
+      return this.generateDefault(guest, qrCode, dir, monogramBuffer);
     }
   }
 

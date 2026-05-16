@@ -142,9 +142,9 @@ function ScannerScreen({ user, branding }) {
       </div>
 
       {/* Monogram idle branding */}
-      {step === 'idle' && !cameraOn && branding?.monogramPath && (
+      {step === 'idle' && !cameraOn && branding?.monogramUrl && (
         <div className="wa-monogram-scanner">
-          <img src={WA.fileUrl(branding.monogramPath, 'branding')} alt="" />
+          <img src={branding.monogramUrl} alt="" />
         </div>
       )}
 

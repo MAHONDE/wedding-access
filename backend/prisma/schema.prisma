@@ -90,7 +90,11 @@ model AppBranding {
   id              String   @id @default(cuid())
   appName         String   @default("Wedding Access")
   monogramPath    String?
+  monogramData    String?
+  monogramMime    String?
   primaryLogoPath String?
+  logoData        String?
+  logoMime        String?
   activeThemeMode String?
   updatedByUserId String?
   createdAt       DateTime @default(now())
