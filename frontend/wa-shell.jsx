@@ -43,9 +43,8 @@ function Shell({ user, branding, onBrandingUpdate, onLogout }) {
     sections[sections.length - 1].items.push(item);
   });
 
-  const monogramUrl = branding?.monogramPath
-    ? WA.fileUrl(branding.monogramPath, 'branding')
-    : null;
+  /* App logo takes priority; fallback to default SVG monogram */
+  const appLogoUrl = branding?.appLogoUrl || null;
 
   const navigate = (id) => { setScreen(id); setSidebarOpen(false); };
 
@@ -61,12 +60,12 @@ function Shell({ user, branding, onBrandingUpdate, onLogout }) {
 
       <aside className={`wa-sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="wa-sidebar-logo">
-          {monogramUrl ? (
-            <div className="wa-sidebar-monogram">
+          {appLogoUrl ? (
+            <div className="wa-sidebar-app-logo">
               <img
-                src={monogramUrl}
-                alt="Monogramme"
-                style={{ maxWidth:'80px', maxHeight:'80px', objectFit:'contain' }}
+                src={appLogoUrl}
+                alt="Wedding Access"
+                style={{ maxWidth:'100px', maxHeight:'64px', objectFit:'contain', display:'block', margin:'0 auto' }}
               />
             </div>
           ) : (

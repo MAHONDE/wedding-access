@@ -103,7 +103,8 @@ function LoginScreen({ branding, onLogin }) {
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
 
-  const monogramUrl = branding?.monogramUrl || null;
+  /* App logo for login screen; fallback to SVG monogram */
+  const appLogoUrl = branding?.appLogoUrl || null;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -123,9 +124,17 @@ function LoginScreen({ branding, onLogin }) {
       <div className="wa-login-box">
         <div className="wa-login-logo">
           <div className="wa-monogram-login">
-            <WeddingMonogram logoUrl={monogramUrl} size={monogramUrl ? 160 : 80} />
+            {appLogoUrl ? (
+              <img
+                src={appLogoUrl}
+                alt="Wedding Access"
+                style={{ width:'160px', maxHeight:'120px', objectFit:'contain', display:'block', margin:'0 auto' }}
+              />
+            ) : (
+              <WeddingMonogram size={80} />
+            )}
           </div>
-          <h1 style={{ marginTop: monogramUrl ? '.75rem' : '1rem' }}>{branding?.appName || 'Wedding Access'}</h1>
+          <h1 style={{ marginTop: appLogoUrl ? '.75rem' : '1rem' }}>{branding?.appName || 'Wedding Access'}</h1>
           <p>Plateforme de gestion cérémonie</p>
           <FloralDivider />
         </div>
@@ -226,7 +235,7 @@ function DashboardScreen({ user, branding }) {
           <div className="wa-monogram-hero">
             <img
               src={branding.monogramUrl}
-              alt=""
+              alt="Monogramme du couple"
               className="wa-monogram-hero-img"
             />
           </div>
@@ -817,11 +826,11 @@ function TemplatesScreen({ user }) {
 
 /* ─── BrandingScreen ────────────────────────────────────────── */
 function BrandingScreen({ user, branding, onUpdate }) {
-  const [appName, setAppName]   = useState(branding?.appName || '');
-  const [saving, setSaving]     = useState(false);
-  const [uploadingM, setUploadingM] = useState(false);
-  const [uploadingL, setUploadingL] = useState(false);
-  const [localBranding, setLocalBranding] = useState(branding);
+  const [appName, setAppName]           = useState(branding?.appName || '');
+  const [saving, setSaving]             = useState(false);
+  const [uploadingLogo, setUploadingLogo]   = useState(false);
+  const [uploadingMono, setUploadingMono]   = useState(false);
+  const [localBranding, setLocalBranding]   = useState(branding);
 
   useEffect(() => { setLocalBranding(branding); setAppName(branding?.appName || ''); }, [branding]);
 
@@ -836,37 +845,37 @@ function BrandingScreen({ user, branding, onUpdate }) {
     finally { setSaving(false); }
   }
 
-  async function uploadMonogram(file) {
-    if (!file) return;
-    setUploadingM(true);
-    try { await WA.branding.uploadMonogram(file); refresh(); } catch (e) { alert(e.message); }
-    finally { setUploadingM(false); }
-  }
-
-  async function deleteMonogram() {
-    if (!confirm('Supprimer le monogramme ?')) return;
-    try { await WA.branding.deleteMonogram(); refresh(); } catch (e) { alert(e.message); }
-  }
-
   async function uploadLogo(file) {
     if (!file) return;
-    setUploadingL(true);
+    setUploadingLogo(true);
     try { await WA.branding.uploadLogo(file); refresh(); } catch (e) { alert(e.message); }
-    finally { setUploadingL(false); }
+    finally { setUploadingLogo(false); }
   }
 
   async function deleteLogo() {
-    if (!confirm('Supprimer le logo ?')) return;
+    if (!confirm('Supprimer le logo de l\'application ?')) return;
     try { await WA.branding.deleteLogo(); refresh(); } catch (e) { alert(e.message); }
   }
 
-  const monogramUrl = localBranding?.monogramUrl || null;
-  const logoUrl     = localBranding?.logoUrl || null;
+  async function uploadMonogram(file) {
+    if (!file) return;
+    setUploadingMono(true);
+    try { await WA.branding.uploadMonogram(file); refresh(); } catch (e) { alert(e.message); }
+    finally { setUploadingMono(false); }
+  }
+
+  async function deleteMonogram() {
+    if (!confirm('Supprimer le monogramme du couple ?')) return;
+    try { await WA.branding.deleteMonogram(); refresh(); } catch (e) { alert(e.message); }
+  }
+
+  const appLogoUrl   = localBranding?.appLogoUrl   || null;
+  const monogramUrl  = localBranding?.monogramUrl  || null;
 
   return (
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1.5rem' }}>
 
-      {/* App name */}
+      {/* ── App name ── */}
       <div className="wa-card" style={{ gridColumn:'1/-1' }}>
         <div className="wa-card-title">Nom de l'application</div>
         <form onSubmit={saveName} style={{ display:'flex', gap:'.75rem', marginTop:'1rem', maxWidth:'480px' }}>
@@ -877,11 +886,51 @@ function BrandingScreen({ user, branding, onUpdate }) {
         </form>
       </div>
 
-      {/* Monogram */}
+      {/* ── Section 1 : Logo de l'application ── */}
       <div className="wa-card">
-        <div className="wa-card-title">Monogramme du couple</div>
+        <div className="wa-card-title">
+          <span style={{ display:'inline-block', background:'var(--wa-gold)', color:'#fff', borderRadius:'4px', fontSize:'10px', padding:'1px 6px', marginRight:'.5rem', fontWeight:600, letterSpacing:'.05em', verticalAlign:'middle' }}>APP</span>
+          Logo de l'application
+        </div>
         <p style={{ fontSize:'12px', color:'var(--wa-muted)', marginTop:'.25rem', marginBottom:'1rem' }}>
-          Apparaît dans la sidebar, l'écran de connexion et les exports PDF. Recommandé : PNG fond transparent, format carré.
+          Identité officielle de l'application "Wedding Access". Apparaît dans la sidebar, l'écran de connexion et les pages d'administration. Recommandé : PNG fond transparent, largeur &gt; 300 px.
+        </p>
+
+        <div style={{ textAlign:'center', marginBottom:'1rem' }}>
+          {appLogoUrl ? (
+            <div style={{ maxWidth:'180px', margin:'0 auto', padding:'1.25rem', background:'var(--wa-stone)', borderRadius:'var(--wa-radius-lg)', display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100px' }}>
+              <img src={appLogoUrl} alt="Logo app" style={{ maxWidth:'100%', maxHeight:'80px', objectFit:'contain' }} />
+            </div>
+          ) : (
+            <div className="wa-template-preview" style={{ minHeight:'100px' }}>
+              <WeddingMonogram size={60} />
+              <span style={{ fontSize:'11px', color:'var(--wa-muted)', marginTop:'.5rem' }}>Aucun logo uploadé</span>
+            </div>
+          )}
+        </div>
+
+        <div className="wa-flex wa-gap-sm" style={{ justifyContent:'center' }}>
+          <label className="wa-btn wa-btn-primary" style={{ cursor:'pointer' }}>
+            {uploadingLogo ? 'Upload…' : (appLogoUrl ? 'Remplacer' : 'Uploader le logo')}
+            <input type="file" accept=".png,.jpg,.jpeg,.svg,.webp" style={{ display:'none' }}
+              onChange={e => uploadLogo(e.target.files[0])} />
+          </label>
+          {appLogoUrl && (
+            <button className="wa-btn wa-btn-ghost" style={{ color:'var(--wa-error)' }} onClick={deleteLogo}>
+              Supprimer
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Section 2 : Monogramme du couple ── */}
+      <div className="wa-card">
+        <div className="wa-card-title">
+          <span style={{ display:'inline-block', background:'#9B7E4C', color:'#fff', borderRadius:'4px', fontSize:'10px', padding:'1px 6px', marginRight:'.5rem', fontWeight:600, letterSpacing:'.05em', verticalAlign:'middle' }}>COUPLE</span>
+          Monogramme du couple
+        </div>
+        <p style={{ fontSize:'12px', color:'var(--wa-muted)', marginTop:'.25rem', marginBottom:'1rem' }}>
+          Élément décoratif personnalisé pour les mariés. Apparaît sur le tableau de bord, le scanner et dans les invitations PDF. Recommandé : PNG fond transparent, format carré.
         </p>
 
         <div style={{ textAlign:'center', marginBottom:'1rem' }}>
@@ -898,7 +947,7 @@ function BrandingScreen({ user, branding, onUpdate }) {
 
         <div className="wa-flex wa-gap-sm" style={{ justifyContent:'center' }}>
           <label className="wa-btn wa-btn-primary" style={{ cursor:'pointer' }}>
-            {uploadingM ? 'Upload…' : (monogramUrl ? 'Remplacer' : 'Uploader')}
+            {uploadingMono ? 'Upload…' : (monogramUrl ? 'Remplacer' : 'Uploader le monogramme')}
             <input type="file" accept=".png,.jpg,.jpeg,.svg,.webp" style={{ display:'none' }}
               onChange={e => uploadMonogram(e.target.files[0])} />
           </label>
@@ -910,64 +959,43 @@ function BrandingScreen({ user, branding, onUpdate }) {
         </div>
       </div>
 
-      {/* Logo */}
-      <div className="wa-card">
-        <div className="wa-card-title">Logo principal</div>
-        <p style={{ fontSize:'12px', color:'var(--wa-muted)', marginTop:'.25rem', marginBottom:'1rem' }}>
-          Logo alternatif pour les exports et documents officiels.
-          Formats acceptés : PNG, JPG, SVG.
-        </p>
-
-        <div style={{ textAlign:'center', marginBottom:'1rem' }}>
-          {logoUrl ? (
-            <div style={{ maxWidth:'160px', margin:'0 auto', padding:'1rem', background:'var(--wa-stone)', borderRadius:'var(--wa-radius-lg)' }}>
-              <img src={logoUrl} alt="Logo" style={{ maxWidth:'100%', maxHeight:'100px', objectFit:'contain' }} />
-            </div>
-          ) : (
-            <div className="wa-template-preview" style={{ minHeight:'120px' }}>
-              <span style={{ fontSize:'2rem', color:'var(--wa-muted)' }}>🖼</span>
-              <span style={{ fontSize:'12px', color:'var(--wa-muted)' }}>Aucun logo uploadé</span>
-            </div>
-          )}
-        </div>
-
-        <div className="wa-flex wa-gap-sm" style={{ justifyContent:'center' }}>
-          <label className="wa-btn wa-btn-primary" style={{ cursor:'pointer' }}>
-            {uploadingL ? 'Upload…' : (logoUrl ? 'Remplacer' : 'Uploader')}
-            <input type="file" accept=".png,.jpg,.jpeg,.svg,.webp" style={{ display:'none' }}
-              onChange={e => uploadLogo(e.target.files[0])} />
-          </label>
-          {logoUrl && (
-            <button className="wa-btn wa-btn-ghost" style={{ color:'var(--wa-error)' }} onClick={deleteLogo}>
-              Supprimer
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Preview */}
+      {/* ── Aperçu ── */}
       <div className="wa-card" style={{ gridColumn:'1/-1' }}>
-        <div className="wa-card-title">Aperçu</div>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem', marginTop:'1rem' }}>
-          {/* Day preview */}
+        <div className="wa-card-title">Aperçu sidebar</div>
+        <p style={{ fontSize:'12px', color:'var(--wa-muted)', marginTop:'.25rem', marginBottom:'1rem' }}>
+          Rendu dans la barre de navigation selon le thème actif.
+        </p>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
+          {/* Day */}
           <div style={{ background:'#FAF8F4', border:'1px solid #E8E4DC', borderRadius:'var(--wa-radius-lg)', padding:'1.5rem', textAlign:'center' }}>
             <div style={{ fontSize:'11px', textTransform:'uppercase', letterSpacing:'.08em', color:'#9B9490', marginBottom:'.75rem' }}>Mode Jour</div>
-            {monogramUrl
-              ? <img src={monogramUrl} alt="Monogramme" style={{ width:'60px', height:'60px', objectFit:'contain', marginBottom:'.5rem' }} />
+            {appLogoUrl
+              ? <img src={appLogoUrl} alt="Logo app" style={{ maxWidth:'100px', maxHeight:'48px', objectFit:'contain', marginBottom:'.5rem' }} />
               : <WeddingMonogram size={60} />}
             <div style={{ fontFamily:'Playfair Display, Georgia, serif', fontSize:'1rem', color:'#C9A84C', marginTop:'.5rem' }}>{appName || 'Wedding Access'}</div>
             <div style={{ fontSize:'11px', color:'#9B9490', marginTop:'2px', fontStyle:'italic', fontFamily:'Cormorant Garamond, Georgia, serif' }}>4 Juillet 2026</div>
           </div>
-          {/* Night preview */}
+          {/* Night */}
           <div style={{ background:'#0D1B34', border:'1px solid rgba(212,175,55,.2)', borderRadius:'var(--wa-radius-lg)', padding:'1.5rem', textAlign:'center' }}>
             <div style={{ fontSize:'11px', textTransform:'uppercase', letterSpacing:'.08em', color:'#6A85A8', marginBottom:'.75rem' }}>Mode Soir</div>
-            {monogramUrl
-              ? <img src={monogramUrl} alt="Monogramme" style={{ width:'60px', height:'60px', objectFit:'contain', marginBottom:'.5rem', filter:'drop-shadow(0 0 8px rgba(212,175,55,.4))' }} />
+            {appLogoUrl
+              ? <img src={appLogoUrl} alt="Logo app" style={{ maxWidth:'100px', maxHeight:'48px', objectFit:'contain', marginBottom:'.5rem', filter:'drop-shadow(0 0 8px rgba(212,175,55,.3))' }} />
               : <svg width="60" height="60" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="none" stroke="#D4AF37" strokeWidth=".8" strokeDasharray="2,4" /><text x="50" y="57" textAnchor="middle" fontFamily="Cormorant Garamond" fontSize="22" fill="#D4AF37">M &amp; J</text></svg>}
             <div style={{ fontFamily:'Playfair Display, Georgia, serif', fontSize:'1rem', color:'#D4AF37', marginTop:'.5rem', textShadow:'0 0 12px rgba(212,175,55,.3)' }}>{appName || 'Wedding Access'}</div>
             <div style={{ fontSize:'11px', color:'#6A85A8', marginTop:'2px', fontStyle:'italic', fontFamily:'Cormorant Garamond, Georgia, serif' }}>4 Juillet 2026</div>
           </div>
         </div>
+
+        {/* Monogram preview (couple) */}
+        {monogramUrl && (
+          <div style={{ marginTop:'1rem', padding:'1rem', background:'var(--wa-stone)', borderRadius:'var(--wa-radius-lg)', display:'flex', alignItems:'center', gap:'1rem' }}>
+            <img src={monogramUrl} alt="Monogramme" style={{ width:'64px', height:'64px', objectFit:'contain' }} />
+            <div>
+              <div style={{ fontSize:'12px', fontWeight:600, color:'var(--wa-charcoal)' }}>Monogramme du couple</div>
+              <div style={{ fontSize:'11px', color:'var(--wa-muted)', marginTop:'2px' }}>Visible dans les invitations PDF, le tableau de bord et le scanner.</div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

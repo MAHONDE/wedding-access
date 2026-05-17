@@ -9,15 +9,16 @@ const STORAGE = process.env.STORAGE_PATH || './storage';
 export class BrandingService {
   constructor(private prisma: PrismaService) {}
 
+  /** Strip raw base64 blobs; compute ready-to-use data: URLs */
   private withUrls(b: any) {
-    const { monogramData, monogramMime, logoData, logoMime, ...rest } = b;
+    const { appLogoData, appLogoMime, monogramData, monogramMime, ...rest } = b;
     return {
       ...rest,
+      appLogoUrl: appLogoData
+        ? `data:${appLogoMime || 'image/png'};base64,${appLogoData}`
+        : null,
       monogramUrl: monogramData
         ? `data:${monogramMime || 'image/png'};base64,${monogramData}`
-        : null,
-      logoUrl: logoData
-        ? `data:${logoMime || 'image/png'};base64,${logoData}`
         : null,
     };
   }
@@ -51,12 +52,57 @@ export class BrandingService {
     return this.withUrls(updated);
   }
 
+  /* ─── App Logo ─────────────────────────────────────────────── */
+
+  async uploadLogo(file: Express.Multer.File, userId: string) {
+    const branding = await this.getRaw();
+    const base64 = file.buffer.toString('base64');
+    const mime = file.mimetype || 'image/png';
+
+    let filePath: string | null = null;
+    try {
+      const dir = path.join(STORAGE, 'branding');
+      fs.mkdirSync(dir, { recursive: true });
+      const ext = path.extname(file.originalname) || '.png';
+      const fileName = `app-logo-${Date.now()}${ext}`;
+      filePath = path.join(dir, fileName);
+      fs.writeFileSync(filePath, file.buffer);
+      if (branding.appLogoPath && fs.existsSync(branding.appLogoPath)) {
+        try { fs.unlinkSync(branding.appLogoPath); } catch {}
+      }
+    } catch {}
+
+    const updated = await this.prisma.appBranding.update({
+      where: { id: branding.id },
+      data: {
+        appLogoData: base64,
+        appLogoMime: mime,
+        appLogoPath: filePath ?? branding.appLogoPath,
+        updatedByUserId: userId,
+      },
+    });
+    return this.withUrls(updated);
+  }
+
+  async deleteLogo(userId: string) {
+    const branding = await this.getRaw();
+    if (branding.appLogoPath && fs.existsSync(branding.appLogoPath)) {
+      try { fs.unlinkSync(branding.appLogoPath); } catch {}
+    }
+    const updated = await this.prisma.appBranding.update({
+      where: { id: branding.id },
+      data: { appLogoPath: null, appLogoData: null, appLogoMime: null, updatedByUserId: userId },
+    });
+    return this.withUrls(updated);
+  }
+
+  /* ─── Couple Monogram ──────────────────────────────────────── */
+
   async uploadMonogram(file: Express.Multer.File, userId: string) {
     const branding = await this.getRaw();
     const base64 = file.buffer.toString('base64');
     const mime = file.mimetype || 'image/png';
 
-    // Best-effort write to disk (for PDF generation; not critical if it fails)
     let filePath: string | null = null;
     try {
       const dir = path.join(STORAGE, 'branding');
@@ -90,48 +136,6 @@ export class BrandingService {
     const updated = await this.prisma.appBranding.update({
       where: { id: branding.id },
       data: { monogramPath: null, monogramData: null, monogramMime: null, updatedByUserId: userId },
-    });
-    return this.withUrls(updated);
-  }
-
-  async uploadLogo(file: Express.Multer.File, userId: string) {
-    const branding = await this.getRaw();
-    const base64 = file.buffer.toString('base64');
-    const mime = file.mimetype || 'image/png';
-
-    let filePath: string | null = null;
-    try {
-      const dir = path.join(STORAGE, 'branding');
-      fs.mkdirSync(dir, { recursive: true });
-      const ext = path.extname(file.originalname) || '.png';
-      const fileName = `logo-${Date.now()}${ext}`;
-      filePath = path.join(dir, fileName);
-      fs.writeFileSync(filePath, file.buffer);
-      if (branding.primaryLogoPath && fs.existsSync(branding.primaryLogoPath)) {
-        try { fs.unlinkSync(branding.primaryLogoPath); } catch {}
-      }
-    } catch {}
-
-    const updated = await this.prisma.appBranding.update({
-      where: { id: branding.id },
-      data: {
-        logoData: base64,
-        logoMime: mime,
-        primaryLogoPath: filePath ?? branding.primaryLogoPath,
-        updatedByUserId: userId,
-      },
-    });
-    return this.withUrls(updated);
-  }
-
-  async deleteLogo(userId: string) {
-    const branding = await this.getRaw();
-    if (branding.primaryLogoPath && fs.existsSync(branding.primaryLogoPath)) {
-      try { fs.unlinkSync(branding.primaryLogoPath); } catch {}
-    }
-    const updated = await this.prisma.appBranding.update({
-      where: { id: branding.id },
-      data: { primaryLogoPath: null, logoData: null, logoMime: null, updatedByUserId: userId },
     });
     return this.withUrls(updated);
   }
