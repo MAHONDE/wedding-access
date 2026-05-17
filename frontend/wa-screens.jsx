@@ -11,6 +11,14 @@ function cereomonyLabel(type) {
   return type === 'VIN_HONNEUR' ? 'Vin d\'honneur' : 'Dîner';
 }
 
+/** Canonical display name: "Jean Dupont" or "Jean Dupont et Marie Dupont" */
+function guestDisplayName(g) {
+  if (!g) return '';
+  return (g.type === 'COUPLE' && g.companionName) || (!g.type && g.companionName)
+    ? `${g.primaryName} et ${g.companionName}`
+    : g.primaryName;
+}
+
 function useCeremonies(user) {
   const [ceremonies, setCeremonies] = useState(_cerCache || []);
   const [loading, setLoading] = useState(!_cerCache);
@@ -43,7 +51,7 @@ function ConfirmDeleteModal({ guest, onConfirm, onCancel, loading }) {
         <p style={{ color:'var(--wa-muted)', fontSize:'14px', marginBottom:'.5rem' }}>
           Êtes-vous sûr de vouloir supprimer{' '}
           <strong style={{ color:'var(--wa-charcoal)' }}>
-            {guest.primaryName}{guest.companionName ? ` & ${guest.companionName}` : ''}
+            {guestDisplayName(guest)}
           </strong> ?
         </p>
         <p style={{ color:'var(--wa-muted)', fontSize:'12px', marginBottom:'1.25rem' }}>
@@ -380,8 +388,7 @@ function GuestsScreen({ user }) {
               {guests.map(g => (
                 <tr key={g.id}>
                   <td style={{ fontWeight:500 }}>
-                    {g.primaryName}
-                    {g.companionName && <span style={{ color:'var(--wa-muted)', fontWeight:400 }}> & {g.companionName}</span>}
+                    {guestDisplayName(g)}
                     {g.phone && <div style={{ fontSize:'11px', color:'var(--wa-muted)' }}>{g.phone}</div>}
                   </td>
                   <td>{typeBadge(g.type)}</td>
@@ -435,8 +442,7 @@ function GuestsScreen({ user }) {
           <div key={g.id} className="wa-guest-card">
             <div className="wa-flex-between" style={{ marginBottom:'.375rem' }}>
               <div>
-                <span style={{ fontWeight:600 }}>{g.primaryName}</span>
-                {g.companionName && <span style={{ color:'var(--wa-muted)' }}> & {g.companionName}</span>}
+                <span style={{ fontWeight:600 }}>{guestDisplayName(g)}</span>
               </div>
               {statusBadge(g.entryStatus)}
             </div>
@@ -614,8 +620,7 @@ function InvitationsScreen({ user }) {
               {guests.map(g => (
                 <tr key={g.id}>
                   <td style={{ fontWeight:500 }}>
-                    {g.primaryName}
-                    {g.companionName && <span style={{ color:'var(--wa-muted)', fontWeight:400 }}> & {g.companionName}</span>}
+                    {guestDisplayName(g)}
                   </td>
                   <td>
                     {g.type === 'COUPLE'
@@ -1103,7 +1108,7 @@ function SeatingScreen({ user }) {
                     defaultValue=""
                     onChange={e => { if (e.target.value) assignGuest(g.id, e.target.value); }}>
                     <option value="" disabled>
-                      {g.primaryName}{g.companionName ? ` & ${g.companionName}` : ''}
+                      {guestDisplayName(g)}
                     </option>
                     {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
@@ -1133,10 +1138,7 @@ function SeatingScreen({ user }) {
                     ? <p style={{ fontSize:'12px', color:'var(--wa-muted)', fontStyle:'italic' }}>Aucun invité</p>
                     : seated.map(g => (
                       <div key={g.id} className="wa-flex-between" style={{ fontSize:'13px', padding:'.25rem 0', borderBottom:'1px solid var(--wa-stone)' }}>
-                        <span>
-                          {g.primaryName}
-                          {g.companionName && <span style={{ color:'var(--wa-muted)', fontSize:'12px' }}> & {g.companionName}</span>}
-                        </span>
+                        <span>{guestDisplayName(g)}</span>
                         <button className="wa-btn wa-btn-ghost" style={{ fontSize:'11px', padding:'.15rem .35rem' }}
                           onClick={() => assignGuest(g.id, null)}>✕</button>
                       </div>
@@ -1228,7 +1230,7 @@ function HistoryScreen({ user }) {
               {filtered.map((s, i) => (
                 <tr key={i}>
                   <td style={{ whiteSpace:'nowrap', fontSize:'12px' }}>{new Date(s.scannedAt).toLocaleString('fr-FR')}</td>
-                  <td>{s.guest?.primaryName || <span className="wa-text-muted">—</span>}</td>
+                  <td>{s.guest ? guestDisplayName(s.guest) : <span className="wa-text-muted">—</span>}</td>
                   <td>
                     {s.ceremony
                       ? <span className="wa-badge wa-badge-gold" style={{ fontSize:'10px' }}>{cereomonyLabel(s.ceremony.type)}</span>

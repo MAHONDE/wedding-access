@@ -163,9 +163,10 @@ export class SeatingPlansService {
       yOffset -= 16;
 
       for (const guest of table.guests) {
-        const label = guest.companionName
-          ? `• ${guest.primaryName} & ${guest.companionName}`
-          : `• ${guest.primaryName}`;
+        const displayName = (guest.type === 'COUPLE' && guest.companionName)
+          ? `${guest.primaryName} et ${guest.companionName}`
+          : guest.primaryName;
+        const label = `• ${displayName}`;
         page.drawText(label, {
           x: xOffset + 10, y: yOffset,
           size: 8, font: fontSans, color: dark,

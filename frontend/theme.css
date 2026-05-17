@@ -837,6 +837,14 @@ select.wa-input { cursor: pointer; }
 }
 .wa-splash-dots span:nth-child(2) { animation-delay: .22s; }
 .wa-splash-dots span:nth-child(3) { animation-delay: .44s; }
+/* Real app logo in splash */
+.wa-splash-logo {
+  filter: drop-shadow(0 2px 12px rgba(0,0,0,.08));
+  transition: filter .3s;
+}
+[data-theme="night"] .wa-splash-logo {
+  filter: drop-shadow(0 0 20px rgba(212,175,55,.35)) drop-shadow(0 2px 8px rgba(0,0,0,.4));
+}
 
 /* Keyframes */
 @keyframes wa-monogram-fadein {

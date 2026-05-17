@@ -138,10 +138,15 @@ export class ScansService {
   }
 
   private formatGuest(guest: any) {
+    const displayName =
+      guest.type === 'COUPLE' && guest.companionName
+        ? `${guest.primaryName} et ${guest.companionName}`
+        : guest.primaryName;
     return {
       id: guest.id,
       primaryName: guest.primaryName,
       companionName: guest.companionName,
+      displayName,
       type: guest.type,
       numberOfSeats: guest.numberOfSeats,
       entryStatus: guest.entryStatus,
@@ -220,7 +225,7 @@ export class ScansService {
         skip,
         take,
         include: {
-          guest: { select: { id: true, primaryName: true } },
+          guest: { select: { id: true, primaryName: true, companionName: true, type: true } },
           scannedBy: { select: { id: true, email: true, firstName: true, lastName: true } },
         },
       }),

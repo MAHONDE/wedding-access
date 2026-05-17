@@ -200,8 +200,10 @@ function ScannerScreen({ user, branding }) {
               <h3>Invité identifié</h3>
               {result.guest && (
                 <p style={{ margin:'.5rem 0' }}>
-                  <strong style={{ fontSize:'1.1rem' }}>{result.guest.primaryName}</strong>
-                  {result.guest.companionName && <><br /><span style={{ color:'var(--wa-muted)' }}>& {result.guest.companionName}</span></>}
+                  <strong style={{ fontSize:'1.1rem' }}>
+                    {result.guest.primaryName}
+                    {result.guest.companionName ? ` et ${result.guest.companionName}` : ''}
+                  </strong>
                   {result.guest.table && <><br /><span className="wa-badge wa-badge-info" style={{ marginTop:'.35rem' }}>Table {result.guest.table.name}</span></>}
                 </p>
               )}
@@ -221,8 +223,10 @@ function ScannerScreen({ user, branding }) {
               <h3>Entrée validée !</h3>
               {result.guest && (
                 <p style={{ margin:'.5rem 0' }}>
-                  <strong>{result.guest.primaryName}</strong>
-                  {result.guest.companionName && <> & {result.guest.companionName}</>}
+                  <strong>
+                    {result.guest.primaryName}
+                    {result.guest.companionName ? ` et ${result.guest.companionName}` : ''}
+                  </strong>
                   <br />Bienvenue !
                   {result.guest.table && <><br /><span style={{ fontWeight:600 }}>→ Table {result.guest.table.name}</span></>}
                 </p>
@@ -247,8 +251,10 @@ function ScannerScreen({ user, branding }) {
               </h3>
               {result.guest && result.result === 'ALREADY_USED' && (
                 <p style={{ margin:'.35rem 0' }}>
-                  <strong>{result.guest.primaryName}</strong>
-                  {result.guest.companionName && <> & {result.guest.companionName}</>}
+                  <strong>
+                    {result.guest.primaryName}
+                    {result.guest.companionName ? ` et ${result.guest.companionName}` : ''}
+                  </strong>
                   <br />Cet invité a déjà été enregistré.
                 </p>
               )}
