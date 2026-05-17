@@ -15,7 +15,9 @@ import { BrandingService } from './branding.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
-@UseGuards(JwtAuthGuard)
+/* GET /branding is intentionally public — the app logo and name are
+   needed before authentication (splash screen, login page).
+   Write operations (upload/delete/patch) remain JWT-protected. */
 @Controller('branding')
 export class BrandingController {
   constructor(private service: BrandingService) {}
@@ -25,6 +27,7 @@ export class BrandingController {
     return this.service.get();
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch()
   update(
     @CurrentUser() user: any,
@@ -33,6 +36,7 @@ export class BrandingController {
     return this.service.update(dto, user.sub);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('monogram')
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   uploadMonogram(
@@ -42,11 +46,13 @@ export class BrandingController {
     return this.service.uploadMonogram(file, user.sub);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('monogram')
   deleteMonogram(@CurrentUser() user: any) {
     return this.service.deleteMonogram(user.sub);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('logo')
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
   uploadLogo(
@@ -56,6 +62,7 @@ export class BrandingController {
     return this.service.uploadLogo(file, user.sub);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete('logo')
   deleteLogo(@CurrentUser() user: any) {
     return this.service.deleteLogo(user.sub);
