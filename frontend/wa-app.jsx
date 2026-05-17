@@ -1,9 +1,9 @@
 /* Wedding Access · App Root */
 const { useState, useEffect, useCallback } = React;
 
-/* ── Logo cache (localStorage) ──────────────────────────────────
-   Used only as an instant fallback while the network request loads.
-   The real source of truth is always GET /branding (now public).  */
+/* ── Logo cache ──────────────────────────────────────────────────
+   Instant frame-0 display while the network request loads.
+   The authoritative source is always GET /branding (public).      */
 function cacheLogoUrl(url) {
   try {
     if (url) localStorage.setItem('wa_app_logo', url);
@@ -46,23 +46,19 @@ function SplashScreen({ logoUrl }) {
 
 /* ── App root ────────────────────────────────────────────────── */
 function App() {
-  const [user, setUser]       = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]         = useState(null);
+  const [loading, setLoading]   = useState(true);
   const [branding, setBranding] = useState(null);
 
-  /* Synchronous first frame: read cache so splash shows logo instantly
-     even before any network request completes.                         */
+  /* Frame-0 logo: shown immediately from cache before any network */
   const [splashLogoUrl, setSplashLogoUrl] = useState(getCachedLogoUrl);
 
-  /* Auto theme switch: jour avant 17h30, soir à partir de 17h30 */
+  /* Auto theme switch */
   useEffect(() => {
     function applyThemeByTime() {
-      const now = new Date();
-      const minutes = now.getHours() * 60 + now.getMinutes();
-      const target = minutes >= 17 * 60 + 30 ? 'night' : 'day';
-      if (document.body.dataset.theme !== target) {
-        document.body.dataset.theme = target;
-      }
+      const h = new Date().getHours() * 60 + new Date().getMinutes();
+      const t = h >= 17 * 60 + 30 ? 'night' : 'day';
+      if (document.body.dataset.theme !== t) document.body.dataset.theme = t;
     }
     applyThemeByTime();
     const id = setInterval(applyThemeByTime, 60000);
@@ -72,7 +68,6 @@ function App() {
   const applyBranding = useCallback((b) => {
     if (!b) return;
     setBranding(b);
-    /* Always sync the splash logo with the live value */
     setSplashLogoUrl(b.appLogoUrl || null);
     cacheLogoUrl(b.appLogoUrl || null);
   }, []);
@@ -81,13 +76,10 @@ function App() {
     WA.auth.logout();
     setUser(null);
     setBranding(null);
-    /* Keep logo cache so the next splash still shows the logo */
   }, []);
 
   const refreshBranding = useCallback(() => {
-    WA.branding.get()
-      .then(b => { if (b) applyBranding(b); })
-      .catch(() => {});
+    WA.branding.get().then(b => { if (b) applyBranding(b); }).catch(() => {});
   }, [applyBranding]);
 
   useEffect(() => {
@@ -97,33 +89,23 @@ function App() {
   }, [logout]);
 
   useEffect(() => {
-    let cancelled = false;
+    /* GET /branding is public — always fetch it, no token needed.
+       GET /auth/me     — only if a token is present.
 
-    /* ── Branding fetch (public endpoint — no JWT needed) ────────
-       Fires immediately on every device/browser/platform.
-       This is the primary mechanism for showing the logo in the
-       splash screen regardless of login state or cache state.      */
-    WA.branding.get()
-      .then(b => { if (!cancelled && b) applyBranding(b); })
-      .catch(() => { /* network failure — cached logo already shown */ });
+       We wait for BOTH promises to settle before hiding the splash.
+       This guarantees the logo is always visible during the splash,
+       regardless of network speed, device, or browser.              */
 
-    /* ── Auth check (parallel) ───────────────────────────────── */
-    if (!WA.auth.getToken()) {
-      setLoading(false);
-      return () => { cancelled = true; };
-    }
+    const brandingPromise = WA.branding.get().catch(() => null);
 
-    WA.auth.me()
-      .then(me => {
-        if (cancelled) return null;
-        setUser(me);
-        /* Branding already fetched above; no second request needed */
-        return null;
-      })
-      .catch(() => { if (!cancelled) WA.auth.logout(); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+    const authPromise = WA.auth.getToken()
+      ? WA.auth.me().catch(() => { WA.auth.logout(); return null; })
+      : Promise.resolve(null);
 
-    return () => { cancelled = true; };
+    Promise.all([brandingPromise, authPromise]).then(([b, me]) => {
+      if (b)  applyBranding(b);
+      if (me) setUser(me);
+    }).finally(() => setLoading(false));
   }, [applyBranding]);
 
   if (loading) return <SplashScreen logoUrl={splashLogoUrl} />;
